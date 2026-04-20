@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JacTool — Catalogue Articles</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    h1 { color: #2c3e50; }
+    #status { padding: 10px; background: #fff; border-left: 4px solid #3498db; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; font-size: 13px; }
+    th { background: #2c3e50; color: #fff; position: sticky; top: 0; }
+    tr:hover { background: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <h1>JacTool — Catalogue Articles</h1>
+  <div id="status">Chargement des articles...</div>
+  <table id="tbl" style="display:none">
+    <thead>
+      <tr>
+        <th>Réf Jactal</th>
+        <th>Libellé</th>
+        <th>Fournisseur</th>
+        <th>Marque</th>
+        <th>Stock 1</th>
+        <th>Stock 2</th>
+        <th>Stock 3</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script>
+    async function loadArticles() {
+      try {
+        const res = await fetch('/api/articles');
+        if (!res.ok) throw new Error('Erreur ' + res.status);
+        const data = await res.json();
+        const tbody = document.getElementById('rows');
+        tbody.innerHTML = data.map(a => `
+          <tr>
+            <td>${a.REF_JACTAL ?? ''}</td>
+            <td>${a.LIBELLE_STANDART ?? ''}</td>
+            <td>${a.NOM_FOURNISSEUR ?? ''}</td>
+            <td>${a.MARQUE_NOM ?? ''}</td>
+            <td>${a.STOCK1 ?? 0}</td>
+            <td>${a.STOCK2 ?? 0}</td>
+            <td>${a.STOCK3 ?? 0}</td>
+          </tr>
+        `).join('');
+        document.getElementById('status').textContent = data.length + ' articles chargés (aperçu des 100 premiers)';
+        document.getElementById('tbl').style.display = 'table';
+      } catch (e) {
+        document.getElementById('status').textContent = 'Erreur: ' + e.message;
+        document.getElementById('status').style.borderColor = '#e74c3c';
+      }
+    }
+    loadArticles();
+  </script>
+</body>
+</html>
