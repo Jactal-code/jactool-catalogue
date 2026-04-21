@@ -95,6 +95,7 @@
     .detail-overlay.open { opacity: 1; pointer-events: auto; }
     .detail-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 720px; max-width: 100vw; background: white; z-index: 101; box-shadow: -4px 0 20px rgba(0,0,0,0.15); transform: translateX(100%); transition: transform 0.25s ease-out; display: flex; flex-direction: column; }
     .detail-panel.open { transform: translateX(0); }
+    #detailContent { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
     .detail-header { padding: 20px; border-bottom: 1px solid #e5e5e9; display: flex; gap: 16px; align-items: flex-start; position: relative; flex-shrink: 0; }
     .detail-close { position: absolute; top: 14px; right: 14px; background: white; border: 1px solid #ccc; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; color: #555; }
     .detail-close:hover { background: #eef2f7; color: #1e3a5f; }
@@ -105,8 +106,8 @@
     .detail-ref { font-family: monospace; color: #666; font-size: 13px; margin-bottom: 6px; }
     .detail-subinfo { color: #555; font-size: 13px; }
 
-    .detail-tabs { display: flex; border-bottom: 1px solid #e5e5e9; background: #f9f9fb; overflow-x: auto; flex-shrink: 0; }
-    .detail-tab { padding: 12px 18px; background: transparent; border: none; cursor: pointer; font-size: 13px; color: #555; border-bottom: 3px solid transparent; white-space: nowrap; font-weight: 500; }
+    .detail-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid #e5e5e9; background: #f9f9fb; flex-shrink: 0; }
+    .detail-tab { flex: 1 1 auto; text-align: center; min-width: 110px; padding: 12px 14px; background: transparent; border: none; cursor: pointer; font-size: 13px; color: #555; border-bottom: 3px solid transparent; white-space: nowrap; font-weight: 500; }
     .detail-tab:hover { color: #1e3a5f; background: #eef2f7; }
     .detail-tab.active { color: #1e3a5f; border-bottom-color: #1e3a5f; background: white; }
 
@@ -191,13 +192,11 @@
 
     let filterOptions = null;
 
-    // ========= DÉTAIL =========
     const STATUT_LABELS = {
       'AC': 'Actif', 'AS': 'Actif sans stock', 'NV': 'Non vendable',
       'AJ': 'Arrêt Jactal', 'IN': 'Inactif fournisseur', 'EP': 'Epuration', 'OC': 'Occasion'
     };
 
-    // Définition des onglets du détail
     const DETAIL_TABS = [
       {
         id: 'infos', label: '📋 Infos',
@@ -432,7 +431,6 @@
         <div class="detail-content">${tabsContent}</div>
       `;
 
-      // Events onglets
       document.getElementById('detailCloseBtn').addEventListener('click', closeDetail);
       document.querySelectorAll('.detail-tab').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -483,7 +481,6 @@
       if (e.key === 'Escape' && document.getElementById('detailPanel').classList.contains('open')) closeDetail();
     });
 
-    // ========= FILTRES =========
     async function loadFilterOptions() {
       try {
         const resp = await fetch('/api/filter-options');
@@ -618,7 +615,6 @@
       else { badge.style.display = 'none'; }
     }
 
-    // ========= ARTICLES =========
     async function loadArticles() {
       const content = document.getElementById('content');
       const info = document.getElementById('info');
@@ -715,7 +711,6 @@
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // Events
     document.getElementById('searchBtn').addEventListener('click', () => {
       currentSearch = document.getElementById('searchInput').value.trim();
       currentPage = 1; loadArticles();
