@@ -59,7 +59,8 @@
     table { width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-collapse: collapse; }
     th { background: #1e3a5f; color: white; padding: 12px; text-align: left; font-weight: 500; font-size: 13px; }
     td { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
-    tr:hover { background: #f9f9fb; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background: #eef2f7; }
     .thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; background: #f0f0f0; }
     .thumb-placeholder { width: 50px; height: 50px; border-radius: 4px; background: #eef2f7; display: flex; align-items: center; justify-content: center; color: #1e3a5f; }
 
@@ -69,7 +70,7 @@
     @media (max-width: 850px)  { .grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 600px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
 
-    .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.15s, box-shadow 0.15s; display: flex; flex-direction: column; }
+    .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.15s, box-shadow 0.15s; display: flex; flex-direction: column; cursor: pointer; }
     .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     .card-photo { width: 100%; aspect-ratio: 1; object-fit: cover; background: #eef2f7; }
     .card-photo-placeholder { width: 100%; aspect-ratio: 1; background: #eef2f7; display: flex; align-items: center; justify-content: center; color: #1e3a5f; }
@@ -88,6 +89,43 @@
     .loading, .error, .empty { padding: 20px; background: white; border-radius: 8px; text-align: center; color: #666; }
     .error { border-left: 4px solid #d33; color: #d33; text-align: left; }
     .footer { margin-top: 20px; font-size: 12px; color: #888; text-align: center; }
+
+    /* ===== PANNEAU DÉTAIL ===== */
+    .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .detail-overlay.open { opacity: 1; pointer-events: auto; }
+    .detail-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 720px; max-width: 100vw; background: white; z-index: 101; box-shadow: -4px 0 20px rgba(0,0,0,0.15); transform: translateX(100%); transition: transform 0.25s ease-out; display: flex; flex-direction: column; }
+    .detail-panel.open { transform: translateX(0); }
+    .detail-header { padding: 20px; border-bottom: 1px solid #e5e5e9; display: flex; gap: 16px; align-items: flex-start; position: relative; flex-shrink: 0; }
+    .detail-close { position: absolute; top: 14px; right: 14px; background: white; border: 1px solid #ccc; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; color: #555; }
+    .detail-close:hover { background: #eef2f7; color: #1e3a5f; }
+    .detail-photo { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; background: #eef2f7; flex-shrink: 0; }
+    .detail-photo-placeholder { width: 120px; height: 120px; border-radius: 8px; background: #eef2f7; display: flex; align-items: center; justify-content: center; color: #1e3a5f; flex-shrink: 0; }
+    .detail-header-info { flex: 1; min-width: 0; padding-right: 40px; }
+    .detail-title { font-size: 18px; font-weight: 600; color: #1e3a5f; margin: 0 0 6px 0; line-height: 1.3; }
+    .detail-ref { font-family: monospace; color: #666; font-size: 13px; margin-bottom: 6px; }
+    .detail-subinfo { color: #555; font-size: 13px; }
+
+    .detail-tabs { display: flex; border-bottom: 1px solid #e5e5e9; background: #f9f9fb; overflow-x: auto; flex-shrink: 0; }
+    .detail-tab { padding: 12px 18px; background: transparent; border: none; cursor: pointer; font-size: 13px; color: #555; border-bottom: 3px solid transparent; white-space: nowrap; font-weight: 500; }
+    .detail-tab:hover { color: #1e3a5f; background: #eef2f7; }
+    .detail-tab.active { color: #1e3a5f; border-bottom-color: #1e3a5f; background: white; }
+
+    .detail-content { flex: 1; overflow-y: auto; padding: 20px; }
+    .detail-section { background: #f9f9fb; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+    .detail-section h3 { margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-rows { display: grid; grid-template-columns: 200px 1fr; gap: 6px 16px; font-size: 13px; }
+    .detail-rows .lbl { color: #666; font-weight: 500; }
+    .detail-rows .val { color: #222; word-break: break-word; }
+    .detail-rows .val-empty { color: #aaa; font-style: italic; }
+    .detail-rows .val-num { font-family: monospace; }
+    .yes-badge { display: inline-block; padding: 2px 8px; background: #2e7d32; color: white; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .no-badge { display: inline-block; padding: 2px 8px; background: #999; color: white; border-radius: 4px; font-size: 11px; font-weight: 600; }
+
+    @media (max-width: 800px) {
+      .detail-panel { width: 100vw; }
+      .detail-rows { grid-template-columns: 1fr; }
+      .detail-rows .lbl { font-size: 11px; text-transform: uppercase; margin-top: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -105,9 +143,7 @@
   </div>
 
   <div class="filters-panel" id="filtersPanel">
-    <div class="filters-grid" id="filtersGrid">
-      <div class="loading">Chargement des filtres…</div>
-    </div>
+    <div class="filters-grid" id="filtersGrid"><div class="loading">Chargement des filtres…</div></div>
   </div>
 
   <div class="info" id="info" style="display:none;">
@@ -123,6 +159,12 @@
 
   <div class="footer">By Velkora Consulting</div>
 
+  <!-- Panneau détail -->
+  <div class="detail-overlay" id="detailOverlay"></div>
+  <div class="detail-panel" id="detailPanel">
+    <div id="detailContent"><div class="loading">Chargement…</div></div>
+  </div>
+
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="icon-box" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 2 2 7v10l10 5 10-5V7l-10-5zm0 2.236L19.764 8 12 11.764 4.236 8 12 4.236zM4 9.618l7 3.5v7.764l-7-3.5V9.618zm9 11.264v-7.764l7-3.5v7.764l-7 3.5z"/>
@@ -136,7 +178,6 @@
     let currentView = 'list';
     let totalPages = 1;
 
-    // État des filtres
     const filters = {
       fournisseurs: new Set(), marques: new Set(), licences: new Set(),
       actif: '', statuts: new Set(),
@@ -148,9 +189,301 @@
       stock3_op: '', stock3_val: '',
     };
 
-    let filterOptions = null; // chargé depuis /api/filter-options
+    let filterOptions = null;
 
-    // --- Chargement initial des options de filtres ---
+    // ========= DÉTAIL =========
+    const STATUT_LABELS = {
+      'AC': 'Actif', 'AS': 'Actif sans stock', 'NV': 'Non vendable',
+      'AJ': 'Arrêt Jactal', 'IN': 'Inactif fournisseur', 'EP': 'Epuration', 'OC': 'Occasion'
+    };
+
+    // Définition des onglets du détail
+    const DETAIL_TABS = [
+      {
+        id: 'infos', label: '📋 Infos',
+        sections: [
+          { title: 'Identification', fields: [
+            ['REF_JACTAL', 'Réf. Jactal'], ['LIBELLE_STANDART', 'Libellé standard'], ['LIBELLE_WEB', 'Libellé web'],
+            ['EAN_JACTAL', 'EAN Jactal'], ['EAN_USINE', 'EAN usine'], ['REF_ART_FOURNISSEUR', 'Réf. fournisseur'],
+            ['CODE_VALORLUX', 'Code Valorlux']
+          ]},
+          { title: 'État', fields: [
+            ['ACTUEL', 'Actif', 'bool'], ['STATUT', 'Statut', 'statut'], ['PERTINANCE', 'Pertinance', 'pertinance'],
+            ['REGROUPE', 'Regroupement'], ['GROUPE_REMISE', 'Groupe remise']
+          ]},
+          { title: 'Dates', fields: [
+            ['DATE_DEBUT_SAISON', 'Début saison'], ['DATE_FIN_SAISON', 'Fin saison'],
+            ['DATE_VALIDITE_SECURE', 'Validité sécurité']
+          ]},
+          { title: 'Commentaire', fields: [
+            ['COMMENTAIRE_INTERNE', 'Commentaire interne']
+          ]}
+        ]
+      },
+      {
+        id: 'fournisseur', label: '🏢 Fournisseur',
+        sections: [
+          { title: 'Fournisseur', fields: [
+            ['NOM_FOURNISSEUR', 'Nom'], ['CODE_FOURNISSEUR', 'Code'], ['DEVISE', 'Devise']
+          ]},
+          { title: 'Acheteur', fields: [
+            ['NOM_ACHETEUR', 'Nom'], ['CODE_ACHETEUR', 'Code']
+          ]},
+          { title: 'Commandes', fields: [
+            ['MIN_CMDE', 'Min. commande', 'num'], ['COLIS_INT', 'Colis interne', 'num'], ['COLIS_EXT', 'Colis externe', 'num']
+          ]}
+        ]
+      },
+      {
+        id: 'catego', label: '🎨 Catégorisation',
+        sections: [
+          { title: 'Marque / Licence', fields: [
+            ['MARQUE_NOM', 'Marque'], ['CLE_MARQUE', 'Clé marque'],
+            ['LICENCE_NOM', 'Licence'], ['CLE_LICENCE', 'Clé licence']
+          ]},
+          { title: 'Cat. traduction', fields: [
+            ['TRAD_GROUPE', 'Code groupe'], ['TRAD_GROUPE_NOM', 'Groupe'],
+            ['TRAD_SOUS_GROUPE', 'Code sous-groupe'], ['TRAD_SOUS_GROUPE_NOM', 'Sous-groupe']
+          ]},
+          { title: 'Cat. web 1', fields: [
+            ['WEB_GROUPE1', 'Code'], ['WEB_GROUPE1_NOM', 'Groupe'],
+            ['WEB_SOUS_GROUPE1', 'Code'], ['WEB_SOUS_GROUPE1_NOM', 'Sous-groupe']
+          ]},
+          { title: 'Cat. web 2', fields: [
+            ['WEB_GROUPE2', 'Code'], ['WEB_GROUPE2_NOM', 'Groupe'],
+            ['WEB_SOUS_GROUPE2', 'Code'], ['WEB_SOUS_GROUPE2_NOM', 'Sous-groupe']
+          ]},
+          { title: 'Cat. web 3', fields: [
+            ['WEB_GROUPE3', 'Code'], ['WEB_GROUPE3_NOM', 'Groupe'],
+            ['WEB_SOUS_GROUPE3', 'Code'], ['WEB_SOUS_GROUPE3_NOM', 'Sous-groupe']
+          ]}
+        ]
+      },
+      {
+        id: 'prix', label: '💰 Prix',
+        sections: [
+          { title: 'Achat', fields: [
+            ['PA', 'Prix achat', 'num'], ['PR', 'Prix revient', 'num']
+          ]},
+          { title: 'Vente HT', fields: [
+            ['HT1_PRIX', 'Prix HT 1', 'num'], ['HT1_CFT', 'Coefficient 1', 'num'],
+            ['HT2_PRIX', 'Prix HT 2', 'num'],
+            ['HT3_PRIX', 'Prix HT 3', 'num'], ['HT3_CFT', 'Coefficient 3', 'num'],
+            ['HT4_PRIX', 'Prix HT 4', 'num'], ['HT4_CFT', 'Coefficient 4', 'num'],
+            ['HT5_PRIX', 'Prix HT 5', 'num'], ['HT5_CFT', 'Coefficient 5', 'num'],
+            ['HT6_PRIX', 'Prix HT 6', 'num'], ['HT6_CFT', 'Coefficient 6', 'num']
+          ]},
+          { title: 'Vente TTC', fields: [
+            ['TTC1_PRIX', 'TTC 1', 'num'], ['TTC2_PRIX', 'TTC 2', 'num'], ['TTC3_PRIX', 'TTC 3', 'num'],
+            ['TTC4_PRIX', 'TTC 4', 'num'], ['TTC5_PRIX', 'TTC 5', 'num'], ['TTC6_PRIX', 'TTC 6', 'num']
+          ]},
+          { title: 'Web', fields: [
+            ['WEB_PVTTC_PROPO', 'PV TTC proposé', 'num'],
+            ['WEB_HT1_PRIX', 'Web HT 1', 'num'], ['WEB1_CFT', 'Coef. web 1', 'num'], ['WEB1_QTE', 'Qté web 1', 'num'],
+            ['WEB_HT2_PRIX', 'Web HT 2', 'num'], ['WEB2_CFT', 'Coef. web 2', 'num'], ['WEB2_QTE', 'Qté web 2', 'num'],
+            ['WEB_HT3_PRIX', 'Web HT 3', 'num'], ['WEB3_CFT', 'Coef. web 3', 'num'], ['WEB3_QTE', 'Qté web 3', 'num'],
+            ['WEB4_PRIX', 'Web 4', 'num'], ['WEB4_CFT', 'Coef. web 4', 'num'], ['WEB4_QTE', 'Qté web 4', 'num']
+          ]},
+          { title: 'Grossiste & remise', fields: [
+            ['PRIX_GROSSISTE', 'Prix grossiste', 'num'], ['QTE_GROSSISTE', 'Qté grossiste', 'num'],
+            ['REMISE_TEMPORAIRE', 'Remise temporaire', 'num']
+          ]}
+        ]
+      },
+      {
+        id: 'stocks', label: '📦 Stocks & Logistique',
+        sections: [
+          { title: 'Stocks', fields: [
+            ['STOCK1', 'Stock 1', 'num'], ['STOCK2', 'Stock 2', 'num'], ['STOCK3', 'Stock 3', 'num']
+          ]},
+          { title: 'Dimensions produit', fields: [
+            ['LARGEUR_MM_PRODUIT', 'Largeur (mm)', 'num'], ['HAUTEUR_MM_PRODUIT', 'Hauteur (mm)', 'num'],
+            ['PROFONDEUR_MM_PRODUIT', 'Profondeur (mm)', 'num'], ['POIDS_G_PRODUIT', 'Poids (g)', 'num']
+          ]},
+          { title: 'Dimensions colis', fields: [
+            ['LARGEUR_MM_COLIS', 'Largeur (mm)', 'num'], ['HAUTEUR_MM_COLIS', 'Hauteur (mm)', 'num'],
+            ['PROFONDEUR_MM_COLIS', 'Profondeur (mm)', 'num'], ['POIDS_G_COLIS', 'Poids (g)', 'num']
+          ]},
+          { title: 'EAN & palette', fields: [
+            ['EAN_COLIS', 'EAN colis'], ['EAN_PALETTE', 'EAN palette'],
+            ['NBRE_COLIS_COUCHE', 'Colis par couche', 'num'],
+            ['EUROPALETE_NBRE_COUCHE', 'Nb couches europalette', 'num']
+          ]},
+          { title: 'Unités', fields: [
+            ['DESCRIPTION_UR', 'Description UR'], ['DESCRIPTION_UC', 'Description UC'],
+            ['QTE_UC_PAR_UR', 'Qté UC / UR', 'num'],
+            ['DESCRIPTION_UV', 'Description UV'], ['QTE_UV_PAR_UC', 'Qté UV / UC', 'num']
+          ]}
+        ]
+      },
+      {
+        id: 'web', label: '🌐 Web',
+        sections: [
+          { title: 'Contenu web', fields: [
+            ['LIBELLE_WEB', 'Libellé'], ['DESCRIPTIF_WEB', 'Descriptif']
+          ]},
+          { title: 'Photos', fields: [
+            ['URL_PHOTO1', 'Photo 1'], ['URL_PHOTO2', 'Photo 2'], ['URL_PHOTO3', 'Photo 3'],
+            ['URL_PHOTO4', 'Photo 4'], ['URL_PHOTO5', 'Photo 5']
+          ]},
+          { title: 'Activation web', fields: [
+            ['ARTICLE_WEB', 'Activé sur web', 'bool'],
+            ['WEB_DATE_MISE_WEB', 'Date mise en ligne'],
+            ['WEB_PRODUIT_PERMANENT', 'Produit permanent', 'bool'],
+            ['WEB_PROD_ZONE_DEFIL', 'Zone défilante', 'bool'],
+            ['WEB_PROD_TETE_CAT', 'Tête de catégorie', 'bool'],
+            ['WEB_PROD_PRECO', 'Préconisé', 'bool']
+          ]},
+          { title: 'Âge & marque TW', fields: [
+            ['AGE_PREVU_TW', 'Âge prévu TW'], ['MARQUE_TW', 'Marque TW']
+          ]},
+          { title: 'Piles fournies', fields: [
+            ['NBRE_BATT_LR03', 'LR03 (AAA)', 'num'], ['NBRE_BATT_LR06', 'LR06 (AA)', 'num'],
+            ['NBRE_BATT_LR14', 'LR14 (C)', 'num'], ['NBRE_BATT_LR20', 'LR20 (D)', 'num'],
+            ['NBRE_BATT_9V', '9V', 'num'], ['NBRE_BATT_AKKU', 'Akku', 'num']
+          ]},
+          { title: 'Pays', fields: [
+            ['WEB_TOUS_PAYS', 'Tous pays', 'bool'],
+            ['WEB_EXCLURE_LUX', 'Exclu LUX', 'bool'],
+            ['WEB_EXCLURE_FRA', 'Exclu FRA', 'bool'],
+            ['WEB_EXCLURE_BEL', 'Exclu BEL', 'bool'],
+            ['WEB_EXCLURE_ALL', 'Exclu ALL', 'bool']
+          ]},
+          { title: 'Autres', fields: [
+            ['WEB_CMDE_AVANT', 'Commande avant'],
+            ['WEB_ARRIVAGE_PREVU', 'Arrivage prévu'],
+            ['WEB_ST1', 'Stock web 1', 'num'], ['WEB_ST2', 'Stock web 2', 'num'],
+            ['LIMITE_COM', 'Limite commande', 'num']
+          ]}
+        ]
+      },
+      {
+        id: 'securite', label: '⚠️ Sécurité',
+        sections: [
+          { title: 'Classification', fields: [
+            ['DANGEREUX', 'Dangereux', 'bool'],
+            ['CLASSIFICATION', 'Classification'],
+            ['POINT_ECLAIR', 'Point éclair', 'num'],
+            ['IMDG', 'IMDG'],
+            ['LITRAGE', 'Litrage', 'num']
+          ]},
+          { title: 'Documents', fields: [
+            ['FICHE_SECURITE', 'Fiche sécurité'],
+            ['CODE_DOUANIER', 'Code douanier']
+          ]}
+        ]
+      }
+    ];
+
+    async function openDetail(ref) {
+      const overlay = document.getElementById('detailOverlay');
+      const panel = document.getElementById('detailPanel');
+      const content = document.getElementById('detailContent');
+
+      overlay.classList.add('open');
+      panel.classList.add('open');
+      content.innerHTML = '<div class="loading" style="margin: 20px;">Chargement…</div>';
+
+      try {
+        const resp = await fetch('/api/article/' + encodeURIComponent(ref));
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const article = await resp.json();
+        renderDetail(article);
+      } catch (err) {
+        content.innerHTML = `<div class="error" style="margin: 20px;">Erreur : ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function closeDetail() {
+      document.getElementById('detailOverlay').classList.remove('open');
+      document.getElementById('detailPanel').classList.remove('open');
+    }
+
+    function renderDetail(a) {
+      const photo = (a.URL_PHOTO1 && a.URL_PHOTO1.trim())
+        ? `<img src="${escapeHtml(a.URL_PHOTO1)}" class="detail-photo" onerror="this.outerHTML='<div class=&quot;detail-photo-placeholder&quot;><svg width=&quot;50%&quot; height=&quot;50%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`
+        : `<div class="detail-photo-placeholder"><svg width="50%" height="50%"><use href="#icon-box"/></svg></div>`;
+
+      const statutLbl = a.STATUT ? (STATUT_LABELS[a.STATUT] || a.STATUT) : '—';
+
+      const tabsHtml = DETAIL_TABS.map((t, i) =>
+        `<button class="detail-tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`
+      ).join('');
+
+      const tabsContent = DETAIL_TABS.map((t, i) => `
+        <div class="detail-tab-content" data-tab-content="${t.id}" style="display:${i === 0 ? 'block' : 'none'};">
+          ${t.sections.map(s => renderDetailSection(s, a)).join('')}
+        </div>
+      `).join('');
+
+      document.getElementById('detailContent').innerHTML = `
+        <div class="detail-header">
+          ${photo}
+          <div class="detail-header-info">
+            <h2 class="detail-title">${escapeHtml(a.LIBELLE_STANDART ?? '—')}</h2>
+            <div class="detail-ref">${escapeHtml(a.REF_JACTAL ?? '')}</div>
+            <div class="detail-subinfo">
+              ${escapeHtml(a.NOM_FOURNISSEUR ?? '—')} • ${escapeHtml(statutLbl)} • Pertinance ${pertBadgeInline(a.PERTINANCE)}
+            </div>
+          </div>
+          <button class="detail-close" id="detailCloseBtn" title="Fermer">✕</button>
+        </div>
+        <div class="detail-tabs">${tabsHtml}</div>
+        <div class="detail-content">${tabsContent}</div>
+      `;
+
+      // Events onglets
+      document.getElementById('detailCloseBtn').addEventListener('click', closeDetail);
+      document.querySelectorAll('.detail-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.detail-tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.querySelectorAll('.detail-tab-content').forEach(c => c.style.display = 'none');
+          document.querySelector(`[data-tab-content="${btn.dataset.tab}"]`).style.display = 'block';
+        });
+      });
+    }
+
+    function renderDetailSection(section, a) {
+      const rows = section.fields.map(([key, lbl, type]) => {
+        const val = a[key];
+        const rendered = renderFieldValue(val, type);
+        return `<div class="lbl">${escapeHtml(lbl)}</div><div class="val">${rendered}</div>`;
+      }).join('');
+      return `<div class="detail-section"><h3>${escapeHtml(section.title)}</h3><div class="detail-rows">${rows}</div></div>`;
+    }
+
+    function renderFieldValue(val, type) {
+      if (val === null || val === undefined || val === '' || val === 0 && type === 'bool') {
+        if (type === 'bool') return `<span class="no-badge">Non</span>`;
+        if (val === 0 && type === 'num') return `<span class="val-num">0</span>`;
+        return `<span class="val-empty">—</span>`;
+      }
+      if (type === 'bool') {
+        const truthy = (val === 1 || val === '1' || val === true || val === 'OUI' || val === 'oui' || val === 'O');
+        return truthy ? `<span class="yes-badge">Oui</span>` : `<span class="no-badge">Non</span>`;
+      }
+      if (type === 'num') return `<span class="val-num">${escapeHtml(val)}</span>`;
+      if (type === 'statut') return escapeHtml(STATUT_LABELS[val] || val);
+      if (type === 'pertinance') return pertBadgeInline(val);
+      return escapeHtml(String(val));
+    }
+
+    function pertBadgeInline(val) {
+      if (val === null || val === undefined) return '<span class="pert pert-low">—</span>';
+      const n = Number(val);
+      let cls = 'pert-low';
+      if (n >= 70) cls = 'pert-high';
+      else if (n >= 30) cls = 'pert-mid';
+      return `<span class="pert ${cls}">${n}</span>`;
+    }
+
+    document.getElementById('detailOverlay').addEventListener('click', closeDetail);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && document.getElementById('detailPanel').classList.contains('open')) closeDetail();
+    });
+
+    // ========= FILTRES =========
     async function loadFilterOptions() {
       try {
         const resp = await fetch('/api/filter-options');
@@ -158,15 +491,13 @@
         filterOptions = await resp.json();
         renderFilters();
       } catch (err) {
-        document.getElementById('filtersGrid').innerHTML = `<div class="error">Erreur chargement filtres : ${escapeHtml(err.message)}</div>`;
+        document.getElementById('filtersGrid').innerHTML = `<div class="error">Erreur : ${escapeHtml(err.message)}</div>`;
       }
     }
 
-    // --- Rendu des filtres ---
     function renderFilters() {
       const grid = document.getElementById('filtersGrid');
       grid.innerHTML = '';
-
       grid.appendChild(makeMultiSelect('fournisseurs', 'Fournisseur', filterOptions.fournisseurs));
       grid.appendChild(makeMultiSelect('marques', 'Marque', filterOptions.marques));
       grid.appendChild(makeMultiSelect('licences', 'Licence', filterOptions.licences));
@@ -197,8 +528,7 @@
             <div class="multi-select-search"><input type="text" placeholder="Rechercher…"></div>
             <div class="multi-select-list"></div>
           </div>
-        </div>
-      `;
+        </div>`;
       const btn = group.querySelector('.multi-select-btn');
       const dropdown = group.querySelector('.multi-select-dropdown');
       const searchInput = group.querySelector('input');
@@ -207,17 +537,13 @@
       function renderList(filter = '') {
         const lowerFilter = filter.toLowerCase();
         list.innerHTML = items
-          .filter(item => {
-            const val = isStatut ? item.label : item;
-            return val.toLowerCase().includes(lowerFilter);
-          })
+          .filter(item => { const val = isStatut ? item.label : item; return val.toLowerCase().includes(lowerFilter); })
           .map(item => {
             const val = isStatut ? item.code : item;
             const display = isStatut ? item.label : item;
             const checked = filters[key].has(val) ? 'checked' : '';
             return `<label class="multi-select-item"><input type="checkbox" value="${escapeHtml(val)}" ${checked}>${escapeHtml(display)}</label>`;
-          })
-          .join('');
+          }).join('');
         list.querySelectorAll('input').forEach(cb => {
           cb.addEventListener('change', e => {
             if (e.target.checked) filters[key].add(e.target.value);
@@ -246,18 +572,12 @@
 
     function updateMultiSelectBtn(btn, key, items, isStatut) {
       const count = filters[key].size;
-      if (count === 0) {
-        btn.textContent = '-- Tous --';
-        btn.classList.remove('has-values');
-      } else if (count === 1) {
+      if (count === 0) { btn.textContent = '-- Tous --'; btn.classList.remove('has-values'); }
+      else if (count === 1) {
         const val = [...filters[key]][0];
         const display = isStatut ? (items.find(i => i.code === val)?.label || val) : val;
-        btn.textContent = display;
-        btn.classList.add('has-values');
-      } else {
-        btn.textContent = `${count} sélectionnés`;
-        btn.classList.add('has-values');
-      }
+        btn.textContent = display; btn.classList.add('has-values');
+      } else { btn.textContent = `${count} sélectionnés`; btn.classList.add('has-values'); }
     }
 
     function makeSimpleSelect(key, label, options) {
@@ -266,10 +586,7 @@
       const opts = options.map(o => `<option value="${o.value}" ${filters[key] === o.value ? 'selected' : ''}>${o.label}</option>`).join('');
       group.innerHTML = `<label>${label}</label><select class="simple-select">${opts}</select>`;
       group.querySelector('select').addEventListener('change', e => {
-        filters[key] = e.target.value;
-        updateFilterBadge();
-        currentPage = 1;
-        loadArticles();
+        filters[key] = e.target.value; updateFilterBadge(); currentPage = 1; loadArticles();
       });
       return group;
     }
@@ -281,17 +598,11 @@
         <label>${label}</label>
         <div class="stock-filter">
           <select>
-            <option value="">—</option>
-            <option value=">">&gt;</option>
-            <option value=">=">&ge;</option>
-            <option value="<">&lt;</option>
-            <option value="<=">&le;</option>
-            <option value="=">=</option>
-            <option value="!=">&ne;</option>
+            <option value="">—</option><option value=">">&gt;</option><option value=">=">&ge;</option>
+            <option value="<">&lt;</option><option value="<=">&le;</option><option value="=">=</option><option value="!=">&ne;</option>
           </select>
           <input type="number" placeholder="valeur">
-        </div>
-      `;
+        </div>`;
       const select = group.querySelector('select');
       const input = group.querySelector('input');
       select.addEventListener('change', () => { filters[key + '_op'] = select.value; updateFilterBadge(); currentPage = 1; loadArticles(); });
@@ -301,17 +612,13 @@
 
     function updateFilterBadge() {
       let count = 0;
-      for (const k in filters) {
-        const v = filters[k];
-        if (v instanceof Set) { if (v.size > 0) count++; }
-        else if (v) count++;
-      }
+      for (const k in filters) { const v = filters[k]; if (v instanceof Set) { if (v.size > 0) count++; } else if (v) count++; }
       const badge = document.getElementById('filterBadge');
       if (count > 0) { badge.textContent = count; badge.style.display = 'inline-block'; }
       else { badge.style.display = 'none'; }
     }
 
-    // --- Chargement des articles ---
+    // ========= ARTICLES =========
     async function loadArticles() {
       const content = document.getElementById('content');
       const info = document.getElementById('info');
@@ -364,7 +671,7 @@
 
     function renderList(articles) {
       const rows = articles.map(a => `
-        <tr>
+        <tr class="clickable" data-ref="${escapeHtml(a.REF_JACTAL ?? '')}">
           <td>${photoOrPlaceholder(a.URL_PHOTO1, 'thumb')}</td>
           <td>${escapeHtml(a.REF_JACTAL ?? '')}</td>
           <td>${escapeHtml(a.LIBELLE_STANDART ?? '')}</td>
@@ -374,17 +681,19 @@
           <td>${a.STOCK3 ?? 0}</td>
           <td>${pertBadge(a.PERTINANCE)}</td>
         </tr>`).join('');
-
       document.getElementById('content').innerHTML = `
         <table><thead><tr>
           <th>Photo</th><th>Réf. Jactal</th><th>Libellé</th><th>Fournisseur</th>
           <th>Stock 1</th><th>Stock 2</th><th>Stock 3</th><th>Pertinance</th>
         </tr></thead><tbody>${rows}</tbody></table>`;
+      document.querySelectorAll('tr.clickable').forEach(tr => {
+        tr.addEventListener('click', () => openDetail(tr.dataset.ref));
+      });
     }
 
     function renderGrid(articles) {
       const cards = articles.map(a => `
-        <div class="card">
+        <div class="card" data-ref="${escapeHtml(a.REF_JACTAL ?? '')}">
           ${photoOrPlaceholder(a.URL_PHOTO1, 'card-photo')}
           <div class="card-body">
             <div class="card-ref">${escapeHtml(a.REF_JACTAL ?? '')}</div>
@@ -397,6 +706,9 @@
           </div>
         </div>`).join('');
       document.getElementById('content').innerHTML = `<div class="grid">${cards}</div>`;
+      document.querySelectorAll('.card').forEach(c => {
+        c.addEventListener('click', () => openDetail(c.dataset.ref));
+      });
     }
 
     function escapeHtml(str) {
@@ -434,12 +746,10 @@
       document.getElementById('filtersPanel').classList.toggle('open');
     });
 
-    // Fermer les dropdowns quand on clique ailleurs
     document.addEventListener('click', () => {
       document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
     });
 
-    // Démarrage
     loadFilterOptions();
     loadArticles();
   </script>
