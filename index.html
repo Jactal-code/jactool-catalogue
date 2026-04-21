@@ -1,274 +1,89 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>JacTool — Catalogue Articles</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    * { box-sizing: border-box; }
-    body { 
-      font-family: 'Segoe UI', Arial, sans-serif; 
-      margin: 0; 
-      padding: 20px; 
-      background: #f5f5f7; 
-      color: #222;
-    }
-    h1 { 
-      color: #1e3a5f; 
-      margin-top: 0;
-    }
-    .toolbar {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .toolbar input {
-      flex: 1;
-      min-width: 200px;
-      padding: 10px 14px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    .toolbar button {
-      padding: 10px 18px;
-      background: #1e3a5f;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .toolbar button:hover { background: #2a4d7e; }
-    .toolbar button:disabled { 
-      background: #999; 
-      cursor: not-allowed;
-    }
-    .info {
-      background: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-size: 14px;
-      color: #555;
-    }
-    .info .count { font-weight: 600; color: #1e3a5f; }
-    .pagination { display: flex; gap: 8px; align-items: center; }
-    .pagination button {
-      padding: 6px 14px;
-      background: white;
-      border: 1px solid #1e3a5f;
-      color: #1e3a5f;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .pagination button:hover:not(:disabled) { background: #1e3a5f; color: white; }
-    .pagination button:disabled { 
-      border-color: #ccc; 
-      color: #999; 
-      cursor: not-allowed;
-    }
-    table {
-      width: 100%;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border-collapse: collapse;
-    }
-    th {
-      background: #1e3a5f;
-      color: white;
-      padding: 12px;
-      text-align: left;
-      font-weight: 500;
-      font-size: 13px;
-    }
-    td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
-    }
-    tr:hover { background: #f9f9fb; }
-    .loading, .error, .empty {
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      text-align: center;
-      color: #666;
-    }
-    .error { 
-      border-left: 4px solid #d33; 
-      color: #d33;
-      text-align: left;
-    }
-    .footer { 
-      margin-top: 20px; 
-      font-size: 12px; 
-      color: #888; 
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <h1>JacTool — Catalogue Articles</h1>
-  
-  <div class="toolbar">
-    <input 
-      type="text" 
-      id="searchInput" 
-      placeholder="Rechercher (code, fournisseur, EAN, libellé...)"
-      autocomplete="off"
-    >
-    <button id="searchBtn">Rechercher</button>
-    <button id="resetBtn">Réinitialiser</button>
-  </div>
+const mysql = require('mysql2/promise');
 
-  <div class="info" id="info" style="display:none;">
-    <div>
-      <span class="count" id="totalCount">0</span> résultats trouvés
-    </div>
-    <div class="pagination">
-      <button id="prevBtn">← Précédent</button>
-      <span id="pageInfo">Page 1 sur 1</span>
-      <button id="nextBtn">Suivant →</button>
-    </div>
-  </div>
+module.exports = async function (context, req) {
+  // Sécurité : n'accepter que les appels venant de la SWA
+  const clientPrincipal = req.headers['x-ms-client-principal'];
+  if (!clientPrincipal) {
+    context.res = {
+      status: 401,
+      body: { error: 'Unauthorized - this API can only be called via the SWA' }
+    };
+    return;
+  }
 
-  <div id="content">
-    <div class="loading">Chargement…</div>
-  </div>
+  // Lecture et validation des query params
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const pageSize = Math.min(200, Math.max(1, parseInt(req.query.pageSize) || 50));
+  const search = (req.query.search || '').trim();
+  const offset = (page - 1) * pageSize;
 
-  <div class="footer">By Velkora Consulting</div>
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: process.env.MYSQL_HOST,
+      port: process.env.MYSQL_PORT || 3306,
+      user: process.env.MYSQL_USER,
+      password: process.env.MYSQL_PASSWORD,
+      database: process.env.MYSQL_DATABASE
+    });
 
-  <script>
-    const PAGE_SIZE = 50;
-    let currentPage = 1;
-    let currentSearch = '';
-    let totalPages = 1;
+    // Construction du WHERE si recherche
+    let whereClause = '';
+    const params = [];
+    if (search) {
+      whereClause = `WHERE 
+        REF_JACTAL LIKE ? 
+        OR NOM_FOURNISSEUR LIKE ? 
+        OR EAN_JACTAL LIKE ? 
+        OR EAN_USINE LIKE ? 
+        OR LIBELLE_STANDART LIKE ? 
+        OR LIBELLE_WEB LIKE ? 
+        OR DESCRIPTIF_WEB LIKE ?
+        OR LICENCE_NOM LIKE ?
+        OR MARQUE_NOM LIKE ?
+        OR TRAD_GROUPE_NOM LIKE ?
+        OR TRAD_SOUS_GROUPE_NOM LIKE ?
+        OR WEB_GROUPE1_NOM LIKE ?
+        OR WEB_SOUS_GROUPE1_NOM LIKE ?`;
+      const searchPattern = `%${search}%`;
+      for (let i = 0; i < 13; i++) params.push(searchPattern);
+    }
 
-    async function loadArticles() {
-      const content = document.getElementById('content');
-      const info = document.getElementById('info');
-      content.innerHTML = '<div class="loading">Chargement…</div>';
-      info.style.display = 'none';
+    // 1) Compte total
+    const [countResult] = await connection.execute(
+      `SELECT COUNT(*) as total FROM V_ARTICLES_CATALOGUE ${whereClause}`,
+      params
+    );
+    const total = countResult[0].total;
 
-      try {
-        const params = new URLSearchParams({
-          page: currentPage,
-          pageSize: PAGE_SIZE
-        });
-        if (currentSearch) params.append('search', currentSearch);
+    // 2) Données paginées
+    const [rows] = await connection.execute(
+      `SELECT REF_JACTAL, LIBELLE_STANDART, NOM_FOURNISSEUR, MARQUE_NOM, 
+              STOCK1, STOCK2, STOCK3 
+       FROM V_ARTICLES_CATALOGUE 
+       ${whereClause}
+       ORDER BY REF_JACTAL
+       LIMIT ${pageSize} OFFSET ${offset}`,
+      params
+    );
 
-        const response = await fetch('/api/articles?' + params.toString());
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        const data = await response.json();
-
-        totalPages = data.totalPages;
-        
-        // Mise à jour du bandeau info
-        document.getElementById('totalCount').textContent = data.total.toLocaleString('fr-FR');
-        document.getElementById('pageInfo').textContent = `Page ${data.page} sur ${data.totalPages || 1}`;
-        document.getElementById('prevBtn').disabled = data.page <= 1;
-        document.getElementById('nextBtn').disabled = data.page >= data.totalPages;
-        info.style.display = 'flex';
-
-        // Si aucun résultat
-        if (data.articles.length === 0) {
-          content.innerHTML = '<div class="empty">Aucun article trouvé.</div>';
-          return;
-        }
-
-        // Construction du tableau
-        const rows = data.articles.map(a => `
-          <tr>
-            <td>${escapeHtml(a.REF_JACTAL ?? '')}</td>
-            <td>${escapeHtml(a.LIBELLE_STANDART ?? '')}</td>
-            <td>${escapeHtml(a.NOM_FOURNISSEUR ?? '')}</td>
-            <td>${escapeHtml(a.MARQUE_NOM ?? '')}</td>
-            <td>${a.STOCK1 ?? 0}</td>
-            <td>${a.STOCK2 ?? 0}</td>
-            <td>${a.STOCK3 ?? 0}</td>
-          </tr>
-        `).join('');
-
-        content.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Réf. Jactal</th>
-                <th>Libellé</th>
-                <th>Fournisseur</th>
-                <th>Marque</th>
-                <th>Stock 1</th>
-                <th>Stock 2</th>
-                <th>Stock 3</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        `;
-      } catch (err) {
-        content.innerHTML = `<div class="error">Erreur : ${escapeHtml(err.message)}</div>`;
+    context.res = {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        articles: rows,
+        total: total,
+        page: page,
+        pageSize: pageSize,
+        totalPages: Math.ceil(total / pageSize)
       }
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    // Event handlers
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      currentSearch = document.getElementById('searchInput').value.trim();
-      currentPage = 1;
-      loadArticles();
-    });
-
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      document.getElementById('searchInput').value = '';
-      currentSearch = '';
-      currentPage = 1;
-      loadArticles();
-    });
-
-    document.getElementById('searchInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') document.getElementById('searchBtn').click();
-    });
-
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      if (currentPage > 1) {
-        currentPage--;
-        loadArticles();
-      }
-    });
-
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      if (currentPage < totalPages) {
-        currentPage++;
-        loadArticles();
-      }
-    });
-
-    // Premier chargement
-    loadArticles();
-  </script>
-</body>
-</html>
+    };
+  } catch (err) {
+    context.res = {
+      status: 500,
+      body: { error: err.message }
+    };
+  } finally {
+    if (connection) await connection.end();
+  }
+};
