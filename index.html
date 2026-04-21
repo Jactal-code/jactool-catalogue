@@ -25,6 +25,8 @@
     .view-toggle button { padding: 10px 14px; background: white; color: #1e3a5f; border: none; cursor: pointer; font-size: 14px; border-radius: 0; }
     .view-toggle button.active { background: #1e3a5f; color: white; }
     .view-toggle button:hover:not(.active) { background: #eef2f7; }
+    .page-size-select { padding: 10px 8px; border: 1px solid #1e3a5f; border-radius: 6px; background: white; color: #1e3a5f; font-size: 14px; cursor: pointer; font-weight: 500; }
+    .page-size-select:hover { background: #eef2f7; }
 
     .filters-panel { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; display: none; }
     .filters-panel.open { display: block; }
@@ -213,6 +215,11 @@
     <button id="toggleFiltersBtn" class="secondary">Filtres <span class="filter-badge" id="filterBadge" style="display:none;">0</span></button>
     <button id="resetBtn" class="secondary">Réinitialiser</button>
     <button id="exportBtn" class="export">📥 Exporter</button>
+    <select id="pageSizeSelect" class="page-size-select" title="Nombre d'articles par page">
+      <option value="50">50 / page</option>
+      <option value="100">100 / page</option>
+      <option value="200">200 / page</option>
+    </select>
     <div class="view-toggle">
       <button id="viewList" class="active" title="Vue liste">☰ Liste</button>
       <button id="viewGrid" title="Vue vignettes">▦ Vignettes</button>
@@ -294,7 +301,7 @@
   </svg>
 
   <script>
-    const PAGE_SIZE = 50;
+    let currentPageSize = 50;
     let currentPage = 1;
     let currentSearch = '';
     let currentView = 'list';
@@ -302,6 +309,7 @@
     let currentTotal = 0;
     let currentSort = 'pertinance';
     let currentOrder = 'desc';
+    let prefsLoaded = false; // on n'écrit pas les prefs tant qu'elles ne sont pas chargées
 
     const filters = {
       fournisseurs: new Set(), marques: new Set(), licences: new Set(),
@@ -1041,7 +1049,7 @@
       info.style.display = 'none';
 
       try {
-        const params = new URLSearchParams({ page: currentPage, pageSize: PAGE_SIZE });
+        const params = new URLSearchParams({ page: currentPage, pageSize: currentPageSize });
         if (currentSearch) params.append('search', currentSearch);
         params.append('sort', currentSort);
         params.append('order', currentOrder);
@@ -1199,8 +1207,92 @@
       document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
     });
 
-    loadFilterOptions();
-    loadArticles();
+    // =============================================================
+    // PRÉFÉRENCES UTILISATEUR
+    // =============================================================
+    let savePrefsTimeout = null;
+
+    async function loadUserPreferences() {
+      try {
+        const resp = await fetch('/api/preferences');
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const prefs = await resp.json();
+        applyPreferences(prefs);
+      } catch (err) {
+        console.warn('Impossible de charger les préférences, valeurs par défaut utilisées:', err);
+      } finally {
+        prefsLoaded = true;
+      }
+    }
+
+    function applyPreferences(prefs) {
+      // Vue
+      if (prefs.view === 'grid') {
+        currentView = 'grid';
+        document.getElementById('viewGrid').classList.add('active');
+        document.getElementById('viewList').classList.remove('active');
+      } else {
+        currentView = 'list';
+        document.getElementById('viewList').classList.add('active');
+        document.getElementById('viewGrid').classList.remove('active');
+      }
+      // Tri
+      if (typeof prefs.sort === 'string') currentSort = prefs.sort;
+      if (prefs.order === 'asc' || prefs.order === 'desc') currentOrder = prefs.order;
+      // Taille de page
+      if (typeof prefs.page_size === 'number' && [50, 100, 200].includes(prefs.page_size)) {
+        currentPageSize = prefs.page_size;
+        document.getElementById('pageSizeSelect').value = String(prefs.page_size);
+      }
+      // Colonnes visibles & modèles d'export seront utilisés plus tard
+      window.__userPrefs = prefs; // on garde le tout en mémoire pour les prochaines étapes
+    }
+
+    function schedulePrefsSave() {
+      if (!prefsLoaded) return; // éviter d'écrire pendant le chargement initial
+      if (savePrefsTimeout) clearTimeout(savePrefsTimeout);
+      savePrefsTimeout = setTimeout(saveUserPreferences, 500);
+    }
+
+    async function saveUserPreferences() {
+      try {
+        const prefs = {
+          view: currentView,
+          sort: currentSort,
+          order: currentOrder,
+          page_size: currentPageSize,
+          visible_columns: (window.__userPrefs && window.__userPrefs.visible_columns) || [],
+          export_templates: (window.__userPrefs && window.__userPrefs.export_templates) || []
+        };
+        const resp = await fetch('/api/preferences', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(prefs)
+        });
+        if (resp.ok) {
+          window.__userPrefs = await resp.json();
+        }
+      } catch (err) {
+        console.warn('Impossible de sauvegarder les préférences:', err);
+      }
+    }
+
+    // Event sur le sélecteur de taille de page
+    document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
+      currentPageSize = parseInt(e.target.value, 10) || 50;
+      currentPage = 1;
+      loadArticles();
+      schedulePrefsSave();
+    });
+
+    // =============================================================
+    // DÉMARRAGE
+    // =============================================================
+    (async () => {
+      await loadUserPreferences();  // charger les prefs avant tout
+      loadFilterOptions();
+      loadArticles();
+    })();
   </script>
 </body>
 </html>
