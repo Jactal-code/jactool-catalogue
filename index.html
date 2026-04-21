@@ -16,6 +16,8 @@
     .toolbar button:disabled { background: #999; cursor: not-allowed; }
     .toolbar button.secondary { background: white; color: #1e3a5f; border: 1px solid #1e3a5f; }
     .toolbar button.secondary:hover { background: #eef2f7; }
+    .toolbar button.export { background: #2e7d32; }
+    .toolbar button.export:hover { background: #388e3c; }
 
     .filter-badge { display: inline-block; margin-left: 6px; background: #d33; color: white; border-radius: 10px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
 
@@ -105,12 +107,10 @@
     .detail-title { font-size: 18px; font-weight: 600; color: #1e3a5f; margin: 0 0 6px 0; line-height: 1.3; }
     .detail-ref { font-family: monospace; color: #666; font-size: 13px; margin-bottom: 6px; }
     .detail-subinfo { color: #555; font-size: 13px; }
-
     .detail-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid #e5e5e9; background: #f9f9fb; flex-shrink: 0; }
     .detail-tab { flex: 1 1 auto; text-align: center; min-width: 110px; padding: 12px 14px; background: transparent; border: none; cursor: pointer; font-size: 13px; color: #555; border-bottom: 3px solid transparent; white-space: nowrap; font-weight: 500; }
     .detail-tab:hover { color: #1e3a5f; background: #eef2f7; }
     .detail-tab.active { color: #1e3a5f; border-bottom-color: #1e3a5f; background: white; }
-
     .detail-content { flex: 1; overflow-y: auto; padding: 20px; }
     .detail-section { background: #f9f9fb; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
     .detail-section h3 { margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -121,6 +121,38 @@
     .detail-rows .val-num { font-family: monospace; }
     .yes-badge { display: inline-block; padding: 2px 8px; background: #2e7d32; color: white; border-radius: 4px; font-size: 11px; font-weight: 600; }
     .no-badge { display: inline-block; padding: 2px 8px; background: #999; color: white; border-radius: 4px; font-size: 11px; font-weight: 600; }
+
+    /* ===== POPUP EXPORT ===== */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 900px; max-width: 100%; max-height: 90vh; display: flex; flex-direction: column; }
+    .modal-header { padding: 20px; border-bottom: 1px solid #e5e5e9; display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { margin: 0; font-size: 18px; color: #1e3a5f; }
+    .modal-close { background: white; border: 1px solid #ccc; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px; color: #555; }
+    .modal-toolbar { padding: 12px 20px; border-bottom: 1px solid #e5e5e9; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: #f9f9fb; }
+    .modal-toolbar input { flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+    .modal-toolbar button { padding: 7px 12px; border: 1px solid #1e3a5f; background: white; color: #1e3a5f; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .modal-toolbar button:hover { background: #eef2f7; }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .col-category { margin-bottom: 18px; }
+    .col-category-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #1e3a5f; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #eef2f7; text-transform: uppercase; letter-spacing: 0.5px; }
+    .col-category-header button { background: none; border: none; color: #1e3a5f; cursor: pointer; font-size: 12px; text-decoration: underline; }
+    .col-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px 12px; }
+    .col-item { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 0; cursor: pointer; }
+    .col-item:hover { color: #1e3a5f; }
+    .col-item input { margin: 0; }
+    .col-item.hidden { display: none; }
+
+    .modal-footer { padding: 16px 20px; border-top: 1px solid #e5e5e9; display: flex; justify-content: space-between; align-items: center; background: #f9f9fb; border-radius: 0 0 10px 10px; }
+    .modal-footer-info { font-size: 13px; color: #555; }
+    .modal-footer-info.warning { color: #d33; font-weight: 600; }
+    .modal-footer-actions { display: flex; gap: 8px; }
+    .modal-footer-actions button { padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; border: none; font-weight: 500; }
+    .btn-cancel { background: white; color: #555; border: 1px solid #ccc !important; }
+    .btn-cancel:hover { background: #eef2f7; }
+    .btn-validate { background: #2e7d32; color: white; }
+    .btn-validate:hover { background: #388e3c; }
+    .btn-validate:disabled { background: #999; cursor: not-allowed; }
 
     @media (max-width: 800px) {
       .detail-panel { width: 100vw; }
@@ -137,6 +169,7 @@
     <button id="searchBtn">Rechercher</button>
     <button id="toggleFiltersBtn" class="secondary">Filtres <span class="filter-badge" id="filterBadge" style="display:none;">0</span></button>
     <button id="resetBtn" class="secondary">Réinitialiser</button>
+    <button id="exportBtn" class="export">📥 Exporter</button>
     <div class="view-toggle">
       <button id="viewList" class="active" title="Vue liste">☰ Liste</button>
       <button id="viewGrid" title="Vue vignettes">▦ Vignettes</button>
@@ -166,6 +199,32 @@
     <div id="detailContent"><div class="loading">Chargement…</div></div>
   </div>
 
+  <!-- Popup Export -->
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">📥 Exporter vers Excel</h2>
+        <button class="modal-close" id="exportCloseBtn">✕</button>
+      </div>
+      <div class="modal-toolbar">
+        <input type="text" id="colSearch" placeholder="Rechercher une colonne…">
+        <button id="selectAllBtn">Tout cocher</button>
+        <button id="selectNoneBtn">Tout décocher</button>
+        <button id="selectDefaultBtn">Colonnes affichées</button>
+      </div>
+      <div class="modal-body" id="colList">
+        <div class="loading">Chargement…</div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-info" id="exportInfo">— colonne(s) sélectionnée(s) — résultats : —</div>
+        <div class="modal-footer-actions">
+          <button class="btn-cancel" id="exportCancelBtn">Annuler</button>
+          <button class="btn-validate" id="exportValidateBtn">Exporter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="icon-box" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 2 2 7v10l10 5 10-5V7l-10-5zm0 2.236L19.764 8 12 11.764 4.236 8 12 4.236zM4 9.618l7 3.5v7.764l-7-3.5V9.618zm9 11.264v-7.764l7-3.5v7.764l-7 3.5z"/>
@@ -178,6 +237,7 @@
     let currentSearch = '';
     let currentView = 'list';
     let totalPages = 1;
+    let currentTotal = 0;
 
     const filters = {
       fournisseurs: new Set(), marques: new Set(), licences: new Set(),
@@ -197,192 +257,351 @@
       'AJ': 'Arrêt Jactal', 'IN': 'Inactif fournisseur', 'EP': 'Epuration', 'OC': 'Occasion'
     };
 
-    const DETAIL_TABS = [
-      {
-        id: 'infos', label: '📋 Infos',
-        sections: [
-          { title: 'Identification', fields: [
-            ['REF_JACTAL', 'Réf. Jactal'], ['LIBELLE_STANDART', 'Libellé standard'], ['LIBELLE_WEB', 'Libellé web'],
-            ['EAN_JACTAL', 'EAN Jactal'], ['EAN_USINE', 'EAN usine'], ['REF_ART_FOURNISSEUR', 'Réf. fournisseur'],
-            ['CODE_VALORLUX', 'Code Valorlux']
-          ]},
-          { title: 'État', fields: [
-            ['ACTUEL', 'Actif', 'bool'], ['STATUT', 'Statut', 'statut'], ['PERTINANCE', 'Pertinance', 'pertinance'],
-            ['REGROUPE', 'Regroupement'], ['GROUPE_REMISE', 'Groupe remise']
-          ]},
-          { title: 'Dates', fields: [
-            ['DATE_DEBUT_SAISON', 'Début saison'], ['DATE_FIN_SAISON', 'Fin saison'],
-            ['DATE_VALIDITE_SECURE', 'Validité sécurité']
-          ]},
-          { title: 'Commentaire', fields: [
-            ['COMMENTAIRE_INTERNE', 'Commentaire interne']
-          ]}
-        ]
-      },
-      {
-        id: 'fournisseur', label: '🏢 Fournisseur',
-        sections: [
-          { title: 'Fournisseur', fields: [
-            ['NOM_FOURNISSEUR', 'Nom'], ['CODE_FOURNISSEUR', 'Code'], ['DEVISE', 'Devise']
-          ]},
-          { title: 'Acheteur', fields: [
-            ['NOM_ACHETEUR', 'Nom'], ['CODE_ACHETEUR', 'Code']
-          ]},
-          { title: 'Commandes', fields: [
-            ['MIN_CMDE', 'Min. commande', 'num'], ['COLIS_INT', 'Colis interne', 'num'], ['COLIS_EXT', 'Colis externe', 'num']
-          ]}
-        ]
-      },
-      {
-        id: 'catego', label: '🎨 Catégorisation',
-        sections: [
-          { title: 'Marque / Licence', fields: [
-            ['MARQUE_NOM', 'Marque'], ['CLE_MARQUE', 'Clé marque'],
-            ['LICENCE_NOM', 'Licence'], ['CLE_LICENCE', 'Clé licence']
-          ]},
-          { title: 'Cat. traduction', fields: [
-            ['TRAD_GROUPE', 'Code groupe'], ['TRAD_GROUPE_NOM', 'Groupe'],
-            ['TRAD_SOUS_GROUPE', 'Code sous-groupe'], ['TRAD_SOUS_GROUPE_NOM', 'Sous-groupe']
-          ]},
-          { title: 'Cat. web 1', fields: [
-            ['WEB_GROUPE1', 'Code'], ['WEB_GROUPE1_NOM', 'Groupe'],
-            ['WEB_SOUS_GROUPE1', 'Code'], ['WEB_SOUS_GROUPE1_NOM', 'Sous-groupe']
-          ]},
-          { title: 'Cat. web 2', fields: [
-            ['WEB_GROUPE2', 'Code'], ['WEB_GROUPE2_NOM', 'Groupe'],
-            ['WEB_SOUS_GROUPE2', 'Code'], ['WEB_SOUS_GROUPE2_NOM', 'Sous-groupe']
-          ]},
-          { title: 'Cat. web 3', fields: [
-            ['WEB_GROUPE3', 'Code'], ['WEB_GROUPE3_NOM', 'Groupe'],
-            ['WEB_SOUS_GROUPE3', 'Code'], ['WEB_SOUS_GROUPE3_NOM', 'Sous-groupe']
-          ]}
-        ]
-      },
-      {
-        id: 'prix', label: '💰 Prix',
-        sections: [
-          { title: 'Achat', fields: [
-            ['PA', 'Prix achat', 'num'], ['PR', 'Prix revient', 'num']
-          ]},
-          { title: 'Vente HT', fields: [
-            ['HT1_PRIX', 'Prix HT 1', 'num'], ['HT1_CFT', 'Coefficient 1', 'num'],
-            ['HT2_PRIX', 'Prix HT 2', 'num'],
-            ['HT3_PRIX', 'Prix HT 3', 'num'], ['HT3_CFT', 'Coefficient 3', 'num'],
-            ['HT4_PRIX', 'Prix HT 4', 'num'], ['HT4_CFT', 'Coefficient 4', 'num'],
-            ['HT5_PRIX', 'Prix HT 5', 'num'], ['HT5_CFT', 'Coefficient 5', 'num'],
-            ['HT6_PRIX', 'Prix HT 6', 'num'], ['HT6_CFT', 'Coefficient 6', 'num']
-          ]},
-          { title: 'Vente TTC', fields: [
-            ['TTC1_PRIX', 'TTC 1', 'num'], ['TTC2_PRIX', 'TTC 2', 'num'], ['TTC3_PRIX', 'TTC 3', 'num'],
-            ['TTC4_PRIX', 'TTC 4', 'num'], ['TTC5_PRIX', 'TTC 5', 'num'], ['TTC6_PRIX', 'TTC 6', 'num']
-          ]},
-          { title: 'Web', fields: [
-            ['WEB_PVTTC_PROPO', 'PV TTC proposé', 'num'],
-            ['WEB_HT1_PRIX', 'Web HT 1', 'num'], ['WEB1_CFT', 'Coef. web 1', 'num'], ['WEB1_QTE', 'Qté web 1', 'num'],
-            ['WEB_HT2_PRIX', 'Web HT 2', 'num'], ['WEB2_CFT', 'Coef. web 2', 'num'], ['WEB2_QTE', 'Qté web 2', 'num'],
-            ['WEB_HT3_PRIX', 'Web HT 3', 'num'], ['WEB3_CFT', 'Coef. web 3', 'num'], ['WEB3_QTE', 'Qté web 3', 'num'],
-            ['WEB4_PRIX', 'Web 4', 'num'], ['WEB4_CFT', 'Coef. web 4', 'num'], ['WEB4_QTE', 'Qté web 4', 'num']
-          ]},
-          { title: 'Grossiste & remise', fields: [
-            ['PRIX_GROSSISTE', 'Prix grossiste', 'num'], ['QTE_GROSSISTE', 'Qté grossiste', 'num'],
-            ['REMISE_TEMPORAIRE', 'Remise temporaire', 'num']
-          ]}
-        ]
-      },
-      {
-        id: 'stocks', label: '📦 Stocks & Logistique',
-        sections: [
-          { title: 'Stocks', fields: [
-            ['STOCK1', 'Stock 1', 'num'], ['STOCK2', 'Stock 2', 'num'], ['STOCK3', 'Stock 3', 'num']
-          ]},
-          { title: 'Dimensions produit', fields: [
-            ['LARGEUR_MM_PRODUIT', 'Largeur (mm)', 'num'], ['HAUTEUR_MM_PRODUIT', 'Hauteur (mm)', 'num'],
-            ['PROFONDEUR_MM_PRODUIT', 'Profondeur (mm)', 'num'], ['POIDS_G_PRODUIT', 'Poids (g)', 'num']
-          ]},
-          { title: 'Dimensions colis', fields: [
-            ['LARGEUR_MM_COLIS', 'Largeur (mm)', 'num'], ['HAUTEUR_MM_COLIS', 'Hauteur (mm)', 'num'],
-            ['PROFONDEUR_MM_COLIS', 'Profondeur (mm)', 'num'], ['POIDS_G_COLIS', 'Poids (g)', 'num']
-          ]},
-          { title: 'EAN & palette', fields: [
-            ['EAN_COLIS', 'EAN colis'], ['EAN_PALETTE', 'EAN palette'],
-            ['NBRE_COLIS_COUCHE', 'Colis par couche', 'num'],
-            ['EUROPALETE_NBRE_COUCHE', 'Nb couches europalette', 'num']
-          ]},
-          { title: 'Unités', fields: [
-            ['DESCRIPTION_UR', 'Description UR'], ['DESCRIPTION_UC', 'Description UC'],
-            ['QTE_UC_PAR_UR', 'Qté UC / UR', 'num'],
-            ['DESCRIPTION_UV', 'Description UV'], ['QTE_UV_PAR_UC', 'Qté UV / UC', 'num']
-          ]}
-        ]
-      },
-      {
-        id: 'web', label: '🌐 Web',
-        sections: [
-          { title: 'Contenu web', fields: [
-            ['LIBELLE_WEB', 'Libellé'], ['DESCRIPTIF_WEB', 'Descriptif']
-          ]},
-          { title: 'Photos', fields: [
-            ['URL_PHOTO1', 'Photo 1'], ['URL_PHOTO2', 'Photo 2'], ['URL_PHOTO3', 'Photo 3'],
-            ['URL_PHOTO4', 'Photo 4'], ['URL_PHOTO5', 'Photo 5']
-          ]},
-          { title: 'Activation web', fields: [
-            ['ARTICLE_WEB', 'Activé sur web', 'bool'],
-            ['WEB_DATE_MISE_WEB', 'Date mise en ligne'],
-            ['WEB_PRODUIT_PERMANENT', 'Produit permanent', 'bool'],
-            ['WEB_PROD_ZONE_DEFIL', 'Zone défilante', 'bool'],
-            ['WEB_PROD_TETE_CAT', 'Tête de catégorie', 'bool'],
-            ['WEB_PROD_PRECO', 'Préconisé', 'bool']
-          ]},
-          { title: 'Âge & marque TW', fields: [
-            ['AGE_PREVU_TW', 'Âge prévu TW'], ['MARQUE_TW', 'Marque TW']
-          ]},
-          { title: 'Piles fournies', fields: [
-            ['NBRE_BATT_LR03', 'LR03 (AAA)', 'num'], ['NBRE_BATT_LR06', 'LR06 (AA)', 'num'],
-            ['NBRE_BATT_LR14', 'LR14 (C)', 'num'], ['NBRE_BATT_LR20', 'LR20 (D)', 'num'],
-            ['NBRE_BATT_9V', '9V', 'num'], ['NBRE_BATT_AKKU', 'Akku', 'num']
-          ]},
-          { title: 'Pays', fields: [
-            ['WEB_TOUS_PAYS', 'Tous pays', 'bool'],
-            ['WEB_EXCLURE_LUX', 'Exclu LUX', 'bool'],
-            ['WEB_EXCLURE_FRA', 'Exclu FRA', 'bool'],
-            ['WEB_EXCLURE_BEL', 'Exclu BEL', 'bool'],
-            ['WEB_EXCLURE_ALL', 'Exclu ALL', 'bool']
-          ]},
-          { title: 'Autres', fields: [
-            ['WEB_CMDE_AVANT', 'Commande avant'],
-            ['WEB_ARRIVAGE_PREVU', 'Arrivage prévu'],
-            ['WEB_ST1', 'Stock web 1', 'num'], ['WEB_ST2', 'Stock web 2', 'num'],
-            ['LIMITE_COM', 'Limite commande', 'num']
-          ]}
-        ]
-      },
-      {
-        id: 'securite', label: '⚠️ Sécurité',
-        sections: [
-          { title: 'Classification', fields: [
-            ['DANGEREUX', 'Dangereux', 'bool'],
-            ['CLASSIFICATION', 'Classification'],
-            ['POINT_ECLAIR', 'Point éclair', 'num'],
-            ['IMDG', 'IMDG'],
-            ['LITRAGE', 'Litrage', 'num']
-          ]},
-          { title: 'Documents', fields: [
-            ['FICHE_SECURITE', 'Fiche sécurité'],
-            ['CODE_DOUANIER', 'Code douanier']
-          ]}
-        ]
+    // Colonnes disponibles pour l'export, regroupées
+    const EXPORT_COLUMNS = [
+      { cat: 'Identification', cols: [
+        ['REF_JACTAL', 'Réf. Jactal'], ['LIBELLE_STANDART', 'Libellé standard'], ['LIBELLE_WEB', 'Libellé web'],
+        ['EAN_JACTAL', 'EAN Jactal'], ['EAN_USINE', 'EAN usine'], ['REF_ART_FOURNISSEUR', 'Réf. fournisseur'],
+        ['CODE_VALORLUX', 'Code Valorlux'], ['COMMENTAIRE_INTERNE', 'Commentaire interne'],
+        ['ACTUEL', 'Actif'], ['STATUT', 'Statut'], ['PERTINANCE', 'Pertinance'],
+        ['REGROUPE', 'Regroupement'], ['GROUPE_REMISE', 'Groupe remise'],
+      ]},
+      { cat: 'Fournisseur / Acheteur', cols: [
+        ['NOM_FOURNISSEUR', 'Nom fournisseur'], ['CODE_FOURNISSEUR', 'Code fournisseur'], ['DEVISE', 'Devise'],
+        ['NOM_ACHETEUR', 'Nom acheteur'], ['CODE_ACHETEUR', 'Code acheteur'],
+        ['MIN_CMDE', 'Min. commande'], ['COLIS_INT', 'Colis interne'], ['COLIS_EXT', 'Colis externe'],
+      ]},
+      { cat: 'Catégorisation', cols: [
+        ['MARQUE_NOM', 'Marque'], ['CLE_MARQUE', 'Clé marque'],
+        ['LICENCE_NOM', 'Licence'], ['CLE_LICENCE', 'Clé licence'],
+        ['TRAD_GROUPE', 'Code groupe trad.'], ['TRAD_GROUPE_NOM', 'Groupe trad.'],
+        ['TRAD_SOUS_GROUPE', 'Code sous-groupe trad.'], ['TRAD_SOUS_GROUPE_NOM', 'Sous-groupe trad.'],
+        ['WEB_GROUPE1', 'Cat. web 1 - code'], ['WEB_GROUPE1_NOM', 'Cat. web 1'],
+        ['WEB_SOUS_GROUPE1', 'Sous-cat. web 1 - code'], ['WEB_SOUS_GROUPE1_NOM', 'Sous-cat. web 1'],
+        ['WEB_GROUPE2', 'Cat. web 2 - code'], ['WEB_GROUPE2_NOM', 'Cat. web 2'],
+        ['WEB_SOUS_GROUPE2', 'Sous-cat. web 2 - code'], ['WEB_SOUS_GROUPE2_NOM', 'Sous-cat. web 2'],
+        ['WEB_GROUPE3', 'Cat. web 3 - code'], ['WEB_GROUPE3_NOM', 'Cat. web 3'],
+        ['WEB_SOUS_GROUPE3', 'Sous-cat. web 3 - code'], ['WEB_SOUS_GROUPE3_NOM', 'Sous-cat. web 3'],
+      ]},
+      { cat: 'Prix', cols: [
+        ['PA', 'Prix achat'], ['PR', 'Prix revient'],
+        ['HT1_PRIX', 'HT 1'], ['HT1_CFT', 'Coef. 1'],
+        ['HT2_PRIX', 'HT 2'],
+        ['HT3_PRIX', 'HT 3'], ['HT3_CFT', 'Coef. 3'],
+        ['HT4_PRIX', 'HT 4'], ['HT4_CFT', 'Coef. 4'],
+        ['HT5_PRIX', 'HT 5'], ['HT5_CFT', 'Coef. 5'],
+        ['HT6_PRIX', 'HT 6'], ['HT6_CFT', 'Coef. 6'],
+        ['TTC1_PRIX', 'TTC 1'], ['TTC2_PRIX', 'TTC 2'], ['TTC3_PRIX', 'TTC 3'],
+        ['TTC4_PRIX', 'TTC 4'], ['TTC5_PRIX', 'TTC 5'], ['TTC6_PRIX', 'TTC 6'],
+        ['WEB_PVTTC_PROPO', 'Web PV TTC proposé'],
+        ['WEB_HT1_PRIX', 'Web HT 1'], ['WEB1_CFT', 'Web coef. 1'], ['WEB1_QTE', 'Web qté 1'],
+        ['WEB_HT2_PRIX', 'Web HT 2'], ['WEB2_CFT', 'Web coef. 2'], ['WEB2_QTE', 'Web qté 2'],
+        ['WEB_HT3_PRIX', 'Web HT 3'], ['WEB3_CFT', 'Web coef. 3'], ['WEB3_QTE', 'Web qté 3'],
+        ['WEB4_PRIX', 'Web 4'], ['WEB4_CFT', 'Web coef. 4'], ['WEB4_QTE', 'Web qté 4'],
+        ['PRIX_GROSSISTE', 'Prix grossiste'], ['QTE_GROSSISTE', 'Qté grossiste'],
+        ['REMISE_TEMPORAIRE', 'Remise temporaire'],
+      ]},
+      { cat: 'Stocks & Logistique', cols: [
+        ['STOCK1', 'Stock 1'], ['STOCK2', 'Stock 2'], ['STOCK3', 'Stock 3'],
+        ['LARGEUR_MM_PRODUIT', 'Largeur produit (mm)'], ['HAUTEUR_MM_PRODUIT', 'Hauteur produit (mm)'],
+        ['PROFONDEUR_MM_PRODUIT', 'Profondeur produit (mm)'], ['POIDS_G_PRODUIT', 'Poids produit (g)'],
+        ['LARGEUR_MM_COLIS', 'Largeur colis (mm)'], ['HAUTEUR_MM_COLIS', 'Hauteur colis (mm)'],
+        ['PROFONDEUR_MM_COLIS', 'Profondeur colis (mm)'], ['POIDS_G_COLIS', 'Poids colis (g)'],
+        ['EAN_COLIS', 'EAN colis'], ['EAN_PALETTE', 'EAN palette'],
+        ['NBRE_COLIS_COUCHE', 'Colis / couche'], ['EUROPALETE_NBRE_COUCHE', 'Nb couches europalette'],
+        ['DESCRIPTION_UR', 'Description UR'], ['DESCRIPTION_UC', 'Description UC'],
+        ['QTE_UC_PAR_UR', 'Qté UC/UR'],
+        ['DESCRIPTION_UV', 'Description UV'], ['QTE_UV_PAR_UC', 'Qté UV/UC'],
+      ]},
+      { cat: 'Web', cols: [
+        ['DESCRIPTIF_WEB', 'Descriptif web'],
+        ['URL_PHOTO1', 'Photo 1'],
+        ['ARTICLE_WEB', 'Activé sur web'],
+        ['WEB_DATE_MISE_WEB', 'Date mise en ligne'],
+        ['WEB_PRODUIT_PERMANENT', 'Produit permanent'],
+        ['WEB_PROD_ZONE_DEFIL', 'Zone défilante'],
+        ['WEB_PROD_TETE_CAT', 'Tête catégorie'],
+        ['WEB_PROD_PRECO', 'Préconisé'],
+        ['AGE_PREVU_TW', 'Âge prévu TW'], ['MARQUE_TW', 'Marque TW'],
+        ['NBRE_BATT_LR03', 'Piles LR03'], ['NBRE_BATT_LR06', 'Piles LR06'],
+        ['NBRE_BATT_LR14', 'Piles LR14'], ['NBRE_BATT_LR20', 'Piles LR20'],
+        ['NBRE_BATT_9V', 'Piles 9V'], ['NBRE_BATT_AKKU', 'Piles Akku'],
+        ['WEB_TOUS_PAYS', 'Tous pays'],
+        ['WEB_EXCLURE_LUX', 'Exclu LUX'], ['WEB_EXCLURE_FRA', 'Exclu FRA'],
+        ['WEB_EXCLURE_BEL', 'Exclu BEL'], ['WEB_EXCLURE_ALL', 'Exclu ALL'],
+        ['WEB_CMDE_AVANT', 'Commande avant'], ['WEB_ARRIVAGE_PREVU', 'Arrivage prévu'],
+        ['WEB_ST1', 'Stock web 1'], ['WEB_ST2', 'Stock web 2'],
+        ['LIMITE_COM', 'Limite com.'],
+      ]},
+      { cat: 'Saison / Dates', cols: [
+        ['DATE_DEBUT_SAISON', 'Début saison'], ['DATE_FIN_SAISON', 'Fin saison'],
+        ['DATE_VALIDITE_SECURE', 'Validité sécurité'],
+      ]},
+      { cat: 'Sécurité', cols: [
+        ['DANGEREUX', 'Dangereux'], ['CLASSIFICATION', 'Classification'],
+        ['POINT_ECLAIR', 'Point éclair'], ['IMDG', 'IMDG'], ['LITRAGE', 'Litrage'],
+        ['FICHE_SECURITE', 'Fiche sécurité'], ['CODE_DOUANIER', 'Code douanier'],
+      ]},
+    ];
+
+    // Colonnes pré-sélectionnées (celles affichées dans la vue liste)
+    const DEFAULT_COLUMNS = ['REF_JACTAL', 'LIBELLE_STANDART', 'NOM_FOURNISSEUR', 'STOCK1', 'STOCK2', 'STOCK3', 'PERTINANCE'];
+    let selectedColumns = new Set(DEFAULT_COLUMNS);
+
+    // === EXPORT ===
+    function buildQueryParams(extraParams = {}) {
+      const params = new URLSearchParams();
+      if (currentSearch) params.append('search', currentSearch);
+      for (const k in filters) {
+        const v = filters[k];
+        if (v instanceof Set && v.size > 0) params.append(k, [...v].join(','));
+        else if (typeof v === 'string' && v) params.append(k, v);
       }
+      for (const k in extraParams) params.append(k, extraParams[k]);
+      return params;
+    }
+
+    function openExportModal() {
+      const modal = document.getElementById('exportModal');
+      renderExportColumns();
+      updateExportInfo();
+      modal.classList.add('open');
+    }
+
+    function closeExportModal() {
+      document.getElementById('exportModal').classList.remove('open');
+    }
+
+    function renderExportColumns(filter = '') {
+      const container = document.getElementById('colList');
+      const lowerFilter = filter.toLowerCase();
+      
+      container.innerHTML = EXPORT_COLUMNS.map(group => {
+        const items = group.cols.map(([key, label]) => {
+          const hidden = lowerFilter && !label.toLowerCase().includes(lowerFilter) && !key.toLowerCase().includes(lowerFilter);
+          const checked = selectedColumns.has(key) ? 'checked' : '';
+          return `<label class="col-item ${hidden ? 'hidden' : ''}" data-key="${key}"><input type="checkbox" value="${key}" ${checked}>${escapeHtml(label)}</label>`;
+        }).join('');
+        return `<div class="col-category"><div class="col-category-header"><span>${group.cat}</span><button data-cat="${escapeHtml(group.cat)}">Inverser</button></div><div class="col-grid">${items}</div></div>`;
+      }).join('');
+
+      container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          if (cb.checked) selectedColumns.add(cb.value);
+          else selectedColumns.delete(cb.value);
+          updateExportInfo();
+        });
+      });
+
+      container.querySelectorAll('.col-category-header button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const catName = btn.dataset.cat;
+          const group = EXPORT_COLUMNS.find(g => g.cat === catName);
+          if (!group) return;
+          const allChecked = group.cols.every(([key]) => selectedColumns.has(key));
+          group.cols.forEach(([key]) => {
+            if (allChecked) selectedColumns.delete(key);
+            else selectedColumns.add(key);
+          });
+          renderExportColumns(document.getElementById('colSearch').value);
+          updateExportInfo();
+        });
+      });
+    }
+
+    function updateExportInfo() {
+      const info = document.getElementById('exportInfo');
+      const validateBtn = document.getElementById('exportValidateBtn');
+      const count = selectedColumns.size;
+      const nbRows = currentTotal;
+      let txt = `${count} colonne(s) sélectionnée(s) — ${nbRows.toLocaleString('fr-FR')} résultat(s)`;
+      info.className = 'modal-footer-info';
+      if (nbRows > 10000) {
+        txt += ' ⚠️ Au-delà de 10 000 lignes, l\'export peut prendre plusieurs minutes';
+        info.className = 'modal-footer-info warning';
+      }
+      info.textContent = txt;
+      validateBtn.disabled = count === 0;
+    }
+
+    async function doExport() {
+      const validateBtn = document.getElementById('exportValidateBtn');
+      validateBtn.disabled = true;
+      validateBtn.textContent = 'Export en cours...';
+
+      try {
+        const params = buildQueryParams({ columns: [...selectedColumns].join(',') });
+        const response = await fetch('/api/export?' + params.toString());
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const blob = await response.blob();
+        
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="(.+)"/);
+        const filename = match ? match[1] : 'articles_export.xlsx';
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        closeExportModal();
+      } catch (err) {
+        alert('Erreur lors de l\'export : ' + err.message);
+      } finally {
+        validateBtn.disabled = false;
+        validateBtn.textContent = 'Exporter';
+      }
+    }
+
+    document.getElementById('exportBtn').addEventListener('click', openExportModal);
+    document.getElementById('exportCloseBtn').addEventListener('click', closeExportModal);
+    document.getElementById('exportCancelBtn').addEventListener('click', closeExportModal);
+    document.getElementById('exportValidateBtn').addEventListener('click', doExport);
+    document.getElementById('colSearch').addEventListener('input', e => renderExportColumns(e.target.value));
+    document.getElementById('selectAllBtn').addEventListener('click', () => {
+      EXPORT_COLUMNS.forEach(g => g.cols.forEach(([key]) => selectedColumns.add(key)));
+      renderExportColumns(document.getElementById('colSearch').value);
+      updateExportInfo();
+    });
+    document.getElementById('selectNoneBtn').addEventListener('click', () => {
+      selectedColumns.clear();
+      renderExportColumns(document.getElementById('colSearch').value);
+      updateExportInfo();
+    });
+    document.getElementById('selectDefaultBtn').addEventListener('click', () => {
+      selectedColumns = new Set(DEFAULT_COLUMNS);
+      renderExportColumns(document.getElementById('colSearch').value);
+      updateExportInfo();
+    });
+
+    // === DÉTAIL ===
+    const DETAIL_TABS = [
+      { id: 'infos', label: '📋 Infos', sections: [
+        { title: 'Identification', fields: [
+          ['REF_JACTAL', 'Réf. Jactal'], ['LIBELLE_STANDART', 'Libellé standard'], ['LIBELLE_WEB', 'Libellé web'],
+          ['EAN_JACTAL', 'EAN Jactal'], ['EAN_USINE', 'EAN usine'], ['REF_ART_FOURNISSEUR', 'Réf. fournisseur'],
+          ['CODE_VALORLUX', 'Code Valorlux']
+        ]},
+        { title: 'État', fields: [
+          ['ACTUEL', 'Actif', 'bool'], ['STATUT', 'Statut', 'statut'], ['PERTINANCE', 'Pertinance', 'pertinance'],
+          ['REGROUPE', 'Regroupement'], ['GROUPE_REMISE', 'Groupe remise']
+        ]},
+        { title: 'Dates', fields: [
+          ['DATE_DEBUT_SAISON', 'Début saison'], ['DATE_FIN_SAISON', 'Fin saison'],
+          ['DATE_VALIDITE_SECURE', 'Validité sécurité']
+        ]},
+        { title: 'Commentaire', fields: [['COMMENTAIRE_INTERNE', 'Commentaire interne']] }
+      ]},
+      { id: 'fournisseur', label: '🏢 Fournisseur', sections: [
+        { title: 'Fournisseur', fields: [['NOM_FOURNISSEUR', 'Nom'], ['CODE_FOURNISSEUR', 'Code'], ['DEVISE', 'Devise']]},
+        { title: 'Acheteur', fields: [['NOM_ACHETEUR', 'Nom'], ['CODE_ACHETEUR', 'Code']]},
+        { title: 'Commandes', fields: [['MIN_CMDE', 'Min. commande', 'num'], ['COLIS_INT', 'Colis interne', 'num'], ['COLIS_EXT', 'Colis externe', 'num']]}
+      ]},
+      { id: 'catego', label: '🎨 Catégorisation', sections: [
+        { title: 'Marque / Licence', fields: [['MARQUE_NOM', 'Marque'], ['CLE_MARQUE', 'Clé marque'], ['LICENCE_NOM', 'Licence'], ['CLE_LICENCE', 'Clé licence']]},
+        { title: 'Cat. traduction', fields: [['TRAD_GROUPE', 'Code groupe'], ['TRAD_GROUPE_NOM', 'Groupe'], ['TRAD_SOUS_GROUPE', 'Code sous-groupe'], ['TRAD_SOUS_GROUPE_NOM', 'Sous-groupe']]},
+        { title: 'Cat. web 1', fields: [['WEB_GROUPE1', 'Code'], ['WEB_GROUPE1_NOM', 'Groupe'], ['WEB_SOUS_GROUPE1', 'Code'], ['WEB_SOUS_GROUPE1_NOM', 'Sous-groupe']]},
+        { title: 'Cat. web 2', fields: [['WEB_GROUPE2', 'Code'], ['WEB_GROUPE2_NOM', 'Groupe'], ['WEB_SOUS_GROUPE2', 'Code'], ['WEB_SOUS_GROUPE2_NOM', 'Sous-groupe']]},
+        { title: 'Cat. web 3', fields: [['WEB_GROUPE3', 'Code'], ['WEB_GROUPE3_NOM', 'Groupe'], ['WEB_SOUS_GROUPE3', 'Code'], ['WEB_SOUS_GROUPE3_NOM', 'Sous-groupe']]}
+      ]},
+      { id: 'prix', label: '💰 Prix', sections: [
+        { title: 'Achat', fields: [['PA', 'Prix achat', 'num'], ['PR', 'Prix revient', 'num']]},
+        { title: 'Vente HT', fields: [
+          ['HT1_PRIX', 'Prix HT 1', 'num'], ['HT1_CFT', 'Coefficient 1', 'num'],
+          ['HT2_PRIX', 'Prix HT 2', 'num'],
+          ['HT3_PRIX', 'Prix HT 3', 'num'], ['HT3_CFT', 'Coefficient 3', 'num'],
+          ['HT4_PRIX', 'Prix HT 4', 'num'], ['HT4_CFT', 'Coefficient 4', 'num'],
+          ['HT5_PRIX', 'Prix HT 5', 'num'], ['HT5_CFT', 'Coefficient 5', 'num'],
+          ['HT6_PRIX', 'Prix HT 6', 'num'], ['HT6_CFT', 'Coefficient 6', 'num']
+        ]},
+        { title: 'Vente TTC', fields: [
+          ['TTC1_PRIX', 'TTC 1', 'num'], ['TTC2_PRIX', 'TTC 2', 'num'], ['TTC3_PRIX', 'TTC 3', 'num'],
+          ['TTC4_PRIX', 'TTC 4', 'num'], ['TTC5_PRIX', 'TTC 5', 'num'], ['TTC6_PRIX', 'TTC 6', 'num']
+        ]},
+        { title: 'Web', fields: [
+          ['WEB_PVTTC_PROPO', 'PV TTC proposé', 'num'],
+          ['WEB_HT1_PRIX', 'Web HT 1', 'num'], ['WEB1_CFT', 'Coef. web 1', 'num'], ['WEB1_QTE', 'Qté web 1', 'num'],
+          ['WEB_HT2_PRIX', 'Web HT 2', 'num'], ['WEB2_CFT', 'Coef. web 2', 'num'], ['WEB2_QTE', 'Qté web 2', 'num'],
+          ['WEB_HT3_PRIX', 'Web HT 3', 'num'], ['WEB3_CFT', 'Coef. web 3', 'num'], ['WEB3_QTE', 'Qté web 3', 'num'],
+          ['WEB4_PRIX', 'Web 4', 'num'], ['WEB4_CFT', 'Coef. web 4', 'num'], ['WEB4_QTE', 'Qté web 4', 'num']
+        ]},
+        { title: 'Grossiste & remise', fields: [
+          ['PRIX_GROSSISTE', 'Prix grossiste', 'num'], ['QTE_GROSSISTE', 'Qté grossiste', 'num'],
+          ['REMISE_TEMPORAIRE', 'Remise temporaire', 'num']
+        ]}
+      ]},
+      { id: 'stocks', label: '📦 Stocks & Logistique', sections: [
+        { title: 'Stocks', fields: [['STOCK1', 'Stock 1', 'num'], ['STOCK2', 'Stock 2', 'num'], ['STOCK3', 'Stock 3', 'num']]},
+        { title: 'Dimensions produit', fields: [
+          ['LARGEUR_MM_PRODUIT', 'Largeur (mm)', 'num'], ['HAUTEUR_MM_PRODUIT', 'Hauteur (mm)', 'num'],
+          ['PROFONDEUR_MM_PRODUIT', 'Profondeur (mm)', 'num'], ['POIDS_G_PRODUIT', 'Poids (g)', 'num']
+        ]},
+        { title: 'Dimensions colis', fields: [
+          ['LARGEUR_MM_COLIS', 'Largeur (mm)', 'num'], ['HAUTEUR_MM_COLIS', 'Hauteur (mm)', 'num'],
+          ['PROFONDEUR_MM_COLIS', 'Profondeur (mm)', 'num'], ['POIDS_G_COLIS', 'Poids (g)', 'num']
+        ]},
+        { title: 'EAN & palette', fields: [
+          ['EAN_COLIS', 'EAN colis'], ['EAN_PALETTE', 'EAN palette'],
+          ['NBRE_COLIS_COUCHE', 'Colis par couche', 'num'],
+          ['EUROPALETE_NBRE_COUCHE', 'Nb couches europalette', 'num']
+        ]},
+        { title: 'Unités', fields: [
+          ['DESCRIPTION_UR', 'Description UR'], ['DESCRIPTION_UC', 'Description UC'],
+          ['QTE_UC_PAR_UR', 'Qté UC / UR', 'num'],
+          ['DESCRIPTION_UV', 'Description UV'], ['QTE_UV_PAR_UC', 'Qté UV / UC', 'num']
+        ]}
+      ]},
+      { id: 'web', label: '🌐 Web', sections: [
+        { title: 'Contenu web', fields: [['LIBELLE_WEB', 'Libellé'], ['DESCRIPTIF_WEB', 'Descriptif']]},
+        { title: 'Photos', fields: [
+          ['URL_PHOTO1', 'Photo 1'], ['URL_PHOTO2', 'Photo 2'], ['URL_PHOTO3', 'Photo 3'],
+          ['URL_PHOTO4', 'Photo 4'], ['URL_PHOTO5', 'Photo 5']
+        ]},
+        { title: 'Activation web', fields: [
+          ['ARTICLE_WEB', 'Activé sur web', 'bool'],
+          ['WEB_DATE_MISE_WEB', 'Date mise en ligne'],
+          ['WEB_PRODUIT_PERMANENT', 'Produit permanent', 'bool'],
+          ['WEB_PROD_ZONE_DEFIL', 'Zone défilante', 'bool'],
+          ['WEB_PROD_TETE_CAT', 'Tête de catégorie', 'bool'],
+          ['WEB_PROD_PRECO', 'Préconisé', 'bool']
+        ]},
+        { title: 'Âge & marque TW', fields: [['AGE_PREVU_TW', 'Âge prévu TW'], ['MARQUE_TW', 'Marque TW']]},
+        { title: 'Piles fournies', fields: [
+          ['NBRE_BATT_LR03', 'LR03 (AAA)', 'num'], ['NBRE_BATT_LR06', 'LR06 (AA)', 'num'],
+          ['NBRE_BATT_LR14', 'LR14 (C)', 'num'], ['NBRE_BATT_LR20', 'LR20 (D)', 'num'],
+          ['NBRE_BATT_9V', '9V', 'num'], ['NBRE_BATT_AKKU', 'Akku', 'num']
+        ]},
+        { title: 'Pays', fields: [
+          ['WEB_TOUS_PAYS', 'Tous pays', 'bool'],
+          ['WEB_EXCLURE_LUX', 'Exclu LUX', 'bool'], ['WEB_EXCLURE_FRA', 'Exclu FRA', 'bool'],
+          ['WEB_EXCLURE_BEL', 'Exclu BEL', 'bool'], ['WEB_EXCLURE_ALL', 'Exclu ALL', 'bool']
+        ]},
+        { title: 'Autres', fields: [
+          ['WEB_CMDE_AVANT', 'Commande avant'], ['WEB_ARRIVAGE_PREVU', 'Arrivage prévu'],
+          ['WEB_ST1', 'Stock web 1', 'num'], ['WEB_ST2', 'Stock web 2', 'num'],
+          ['LIMITE_COM', 'Limite commande', 'num']
+        ]}
+      ]},
+      { id: 'securite', label: '⚠️ Sécurité', sections: [
+        { title: 'Classification', fields: [
+          ['DANGEREUX', 'Dangereux', 'bool'], ['CLASSIFICATION', 'Classification'],
+          ['POINT_ECLAIR', 'Point éclair', 'num'], ['IMDG', 'IMDG'], ['LITRAGE', 'Litrage', 'num']
+        ]},
+        { title: 'Documents', fields: [['FICHE_SECURITE', 'Fiche sécurité'], ['CODE_DOUANIER', 'Code douanier']]}
+      ]}
     ];
 
     async function openDetail(ref) {
       const overlay = document.getElementById('detailOverlay');
       const panel = document.getElementById('detailPanel');
       const content = document.getElementById('detailContent');
-
       overlay.classList.add('open');
       panel.classList.add('open');
       content.innerHTML = '<div class="loading" style="margin: 20px;">Chargement…</div>';
-
       try {
         const resp = await fetch('/api/article/' + encodeURIComponent(ref));
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -402,35 +621,21 @@
       const photo = (a.URL_PHOTO1 && a.URL_PHOTO1.trim())
         ? `<img src="${escapeHtml(a.URL_PHOTO1)}" class="detail-photo" onerror="this.outerHTML='<div class=&quot;detail-photo-placeholder&quot;><svg width=&quot;50%&quot; height=&quot;50%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`
         : `<div class="detail-photo-placeholder"><svg width="50%" height="50%"><use href="#icon-box"/></svg></div>`;
-
       const statutLbl = a.STATUT ? (STATUT_LABELS[a.STATUT] || a.STATUT) : '—';
-
-      const tabsHtml = DETAIL_TABS.map((t, i) =>
-        `<button class="detail-tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`
-      ).join('');
-
-      const tabsContent = DETAIL_TABS.map((t, i) => `
-        <div class="detail-tab-content" data-tab-content="${t.id}" style="display:${i === 0 ? 'block' : 'none'};">
-          ${t.sections.map(s => renderDetailSection(s, a)).join('')}
-        </div>
-      `).join('');
-
+      const tabsHtml = DETAIL_TABS.map((t, i) => `<button class="detail-tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`).join('');
+      const tabsContent = DETAIL_TABS.map((t, i) => `<div class="detail-tab-content" data-tab-content="${t.id}" style="display:${i === 0 ? 'block' : 'none'};">${t.sections.map(s => renderDetailSection(s, a)).join('')}</div>`).join('');
       document.getElementById('detailContent').innerHTML = `
         <div class="detail-header">
           ${photo}
           <div class="detail-header-info">
             <h2 class="detail-title">${escapeHtml(a.LIBELLE_STANDART ?? '—')}</h2>
             <div class="detail-ref">${escapeHtml(a.REF_JACTAL ?? '')}</div>
-            <div class="detail-subinfo">
-              ${escapeHtml(a.NOM_FOURNISSEUR ?? '—')} • ${escapeHtml(statutLbl)} • Pertinance ${pertBadgeInline(a.PERTINANCE)}
-            </div>
+            <div class="detail-subinfo">${escapeHtml(a.NOM_FOURNISSEUR ?? '—')} • ${escapeHtml(statutLbl)} • Pertinance ${pertBadgeInline(a.PERTINANCE)}</div>
           </div>
           <button class="detail-close" id="detailCloseBtn" title="Fermer">✕</button>
         </div>
         <div class="detail-tabs">${tabsHtml}</div>
-        <div class="detail-content">${tabsContent}</div>
-      `;
-
+        <div class="detail-content">${tabsContent}</div>`;
       document.getElementById('detailCloseBtn').addEventListener('click', closeDetail);
       document.querySelectorAll('.detail-tab').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -445,8 +650,7 @@
     function renderDetailSection(section, a) {
       const rows = section.fields.map(([key, lbl, type]) => {
         const val = a[key];
-        const rendered = renderFieldValue(val, type);
-        return `<div class="lbl">${escapeHtml(lbl)}</div><div class="val">${rendered}</div>`;
+        return `<div class="lbl">${escapeHtml(lbl)}</div><div class="val">${renderFieldValue(val, type)}</div>`;
       }).join('');
       return `<div class="detail-section"><h3>${escapeHtml(section.title)}</h3><div class="detail-rows">${rows}</div></div>`;
     }
@@ -478,9 +682,13 @@
 
     document.getElementById('detailOverlay').addEventListener('click', closeDetail);
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && document.getElementById('detailPanel').classList.contains('open')) closeDetail();
+      if (e.key === 'Escape') {
+        if (document.getElementById('detailPanel').classList.contains('open')) closeDetail();
+        if (document.getElementById('exportModal').classList.contains('open')) closeExportModal();
+      }
     });
 
+    // === FILTRES ===
     async function loadFilterOptions() {
       try {
         const resp = await fetch('/api/filter-options');
@@ -562,7 +770,6 @@
       searchInput.addEventListener('input', e => renderList(e.target.value));
       searchInput.addEventListener('click', e => e.stopPropagation());
       dropdown.addEventListener('click', e => e.stopPropagation());
-
       updateMultiSelectBtn(btn, key, items, isStatut);
       return group;
     }
@@ -635,6 +842,7 @@
         const data = await response.json();
 
         totalPages = data.totalPages;
+        currentTotal = data.total;
         document.getElementById('totalCount').textContent = data.total.toLocaleString('fr-FR');
         document.getElementById('pageInfo').textContent = `Page ${data.page} sur ${data.totalPages || 1}`;
         document.getElementById('prevBtn').disabled = data.page <= 1;
@@ -672,9 +880,7 @@
           <td>${escapeHtml(a.REF_JACTAL ?? '')}</td>
           <td>${escapeHtml(a.LIBELLE_STANDART ?? '')}</td>
           <td>${escapeHtml(a.NOM_FOURNISSEUR ?? '')}</td>
-          <td>${a.STOCK1 ?? 0}</td>
-          <td>${a.STOCK2 ?? 0}</td>
-          <td>${a.STOCK3 ?? 0}</td>
+          <td>${a.STOCK1 ?? 0}</td><td>${a.STOCK2 ?? 0}</td><td>${a.STOCK3 ?? 0}</td>
           <td>${pertBadge(a.PERTINANCE)}</td>
         </tr>`).join('');
       document.getElementById('content').innerHTML = `
@@ -682,9 +888,7 @@
           <th>Photo</th><th>Réf. Jactal</th><th>Libellé</th><th>Fournisseur</th>
           <th>Stock 1</th><th>Stock 2</th><th>Stock 3</th><th>Pertinance</th>
         </tr></thead><tbody>${rows}</tbody></table>`;
-      document.querySelectorAll('tr.clickable').forEach(tr => {
-        tr.addEventListener('click', () => openDetail(tr.dataset.ref));
-      });
+      document.querySelectorAll('tr.clickable').forEach(tr => tr.addEventListener('click', () => openDetail(tr.dataset.ref)));
     }
 
     function renderGrid(articles) {
@@ -702,9 +906,7 @@
           </div>
         </div>`).join('');
       document.getElementById('content').innerHTML = `<div class="grid">${cards}</div>`;
-      document.querySelectorAll('.card').forEach(c => {
-        c.addEventListener('click', () => openDetail(c.dataset.ref));
-      });
+      document.querySelectorAll('.card').forEach(c => c.addEventListener('click', () => openDetail(c.dataset.ref)));
     }
 
     function escapeHtml(str) {
