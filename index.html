@@ -1146,6 +1146,7 @@
           }
           currentPage = 1;
           loadArticles();
+          schedulePrefsSave();
         });
       });
     }
@@ -1192,12 +1193,15 @@
       document.getElementById('viewList').classList.add('active');
       document.getElementById('viewGrid').classList.remove('active');
       loadArticles();
+      schedulePrefsSave();
     });
     document.getElementById('viewGrid').addEventListener('click', () => {
       currentView = 'grid';
       document.getElementById('viewGrid').classList.add('active');
       document.getElementById('viewList').classList.remove('active');
       loadArticles();
+      schedulePrefsSave();
+    });
     });
     document.getElementById('toggleFiltersBtn').addEventListener('click', () => {
       document.getElementById('filtersPanel').classList.toggle('open');
