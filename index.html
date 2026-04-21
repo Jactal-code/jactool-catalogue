@@ -1,89 +1,473 @@
-const mysql = require('mysql2/promise');
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>JacTool — Catalogue Articles</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      background: #f5f5f7; 
+      color: #222;
+    }
+    h1 { color: #1e3a5f; margin-top: 0; }
 
-module.exports = async function (context, req) {
-  // Sécurité : n'accepter que les appels venant de la SWA
-  const clientPrincipal = req.headers['x-ms-client-principal'];
-  if (!clientPrincipal) {
-    context.res = {
-      status: 401,
-      body: { error: 'Unauthorized - this API can only be called via the SWA' }
-    };
-    return;
-  }
+    .toolbar {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .toolbar input {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .toolbar button {
+      padding: 10px 18px;
+      background: #1e3a5f;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .toolbar button:hover { background: #2a4d7e; }
+    .toolbar button:disabled { background: #999; cursor: not-allowed; }
 
-  // Lecture et validation des query params
-  const page = Math.max(1, parseInt(req.query.page) || 1);
-  const pageSize = Math.min(200, Math.max(1, parseInt(req.query.pageSize) || 50));
-  const search = (req.query.search || '').trim();
-  const offset = (page - 1) * pageSize;
+    .view-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid #1e3a5f;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .view-toggle button {
+      padding: 10px 14px;
+      background: white;
+      color: #1e3a5f;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 0;
+    }
+    .view-toggle button.active {
+      background: #1e3a5f;
+      color: white;
+    }
+    .view-toggle button:hover:not(.active) { background: #eef2f7; }
 
-  let connection;
-  try {
-    connection = await mysql.createConnection({
-      host: process.env.MYSQL_HOST,
-      port: process.env.MYSQL_PORT || 3306,
-      user: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE
-    });
+    .info {
+      background: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+    .info .count { font-weight: 600; color: #1e3a5f; }
+    .pagination { display: flex; gap: 8px; align-items: center; }
+    .pagination button {
+      padding: 6px 14px;
+      background: white;
+      border: 1px solid #1e3a5f;
+      color: #1e3a5f;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .pagination button:hover:not(:disabled) { background: #1e3a5f; color: white; }
+    .pagination button:disabled { border-color: #ccc; color: #999; cursor: not-allowed; }
 
-    // Construction du WHERE si recherche
-    let whereClause = '';
-    const params = [];
-    if (search) {
-      whereClause = `WHERE 
-        REF_JACTAL LIKE ? 
-        OR NOM_FOURNISSEUR LIKE ? 
-        OR EAN_JACTAL LIKE ? 
-        OR EAN_USINE LIKE ? 
-        OR LIBELLE_STANDART LIKE ? 
-        OR LIBELLE_WEB LIKE ? 
-        OR DESCRIPTIF_WEB LIKE ?
-        OR LICENCE_NOM LIKE ?
-        OR MARQUE_NOM LIKE ?
-        OR TRAD_GROUPE_NOM LIKE ?
-        OR TRAD_SOUS_GROUPE_NOM LIKE ?
-        OR WEB_GROUPE1_NOM LIKE ?
-        OR WEB_SOUS_GROUPE1_NOM LIKE ?`;
-      const searchPattern = `%${search}%`;
-      for (let i = 0; i < 13; i++) params.push(searchPattern);
+    /* VUE LISTE */
+    table {
+      width: 100%;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-collapse: collapse;
+    }
+    th {
+      background: #1e3a5f;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 500;
+      font-size: 13px;
+    }
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      vertical-align: middle;
+    }
+    tr:hover { background: #f9f9fb; }
+    .thumb {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: #f0f0f0;
+    }
+    .thumb-placeholder {
+      width: 50px;
+      height: 50px;
+      border-radius: 4px;
+      background: #eef2f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1e3a5f;
     }
 
-    // 1) Compte total
-    const [countResult] = await connection.execute(
-      `SELECT COUNT(*) as total FROM V_ARTICLES_CATALOGUE ${whereClause}`,
-      params
-    );
-    const total = countResult[0].total;
+    /* VUE VIGNETTES */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 15px;
+    }
+    @media (max-width: 1400px) { .grid { grid-template-columns: repeat(5, 1fr); } }
+    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 850px)  { .grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 600px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
 
-    // 2) Données paginées
-    const [rows] = await connection.execute(
-      `SELECT REF_JACTAL, LIBELLE_STANDART, NOM_FOURNISSEUR, MARQUE_NOM, 
-              STOCK1, STOCK2, STOCK3 
-       FROM V_ARTICLES_CATALOGUE 
-       ${whereClause}
-       ORDER BY REF_JACTAL
-       LIMIT ${pageSize} OFFSET ${offset}`,
-      params
-    );
+    .card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex;
+      flex-direction: column;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .card-photo {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      background: #eef2f7;
+    }
+    .card-photo-placeholder {
+      width: 100%;
+      aspect-ratio: 1;
+      background: #eef2f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1e3a5f;
+    }
+    .card-body {
+      padding: 10px 12px;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .card-ref {
+      font-family: monospace;
+      color: #666;
+      font-size: 12px;
+    }
+    .card-title {
+      font-weight: 500;
+      color: #222;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-fourn {
+      color: #666;
+      font-size: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+    }
+    .card-stocks {
+      color: #555;
+      font-size: 11px;
+    }
 
-    context.res = {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: {
-        articles: rows,
-        total: total,
-        page: page,
-        pageSize: pageSize,
-        totalPages: Math.ceil(total / pageSize)
+    /* PERTINANCE badge */
+    .pert {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+      min-width: 40px;
+      text-align: center;
+    }
+    .pert-high { background: #2e7d32; }
+    .pert-mid  { background: #ed6c02; }
+    .pert-low  { background: #999; }
+
+    .loading, .error, .empty {
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      text-align: center;
+      color: #666;
+    }
+    .error { 
+      border-left: 4px solid #d33; 
+      color: #d33;
+      text-align: left;
+    }
+    .footer { 
+      margin-top: 20px; 
+      font-size: 12px; 
+      color: #888; 
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>JacTool — Catalogue Articles</h1>
+  
+  <div class="toolbar">
+    <input 
+      type="text" 
+      id="searchInput" 
+      placeholder="Rechercher (code, fournisseur, EAN, libellé, marque, licence...)"
+      autocomplete="off"
+    >
+    <button id="searchBtn">Rechercher</button>
+    <button id="resetBtn">Réinitialiser</button>
+    <div class="view-toggle">
+      <button id="viewList" class="active" title="Vue liste">☰ Liste</button>
+      <button id="viewGrid" title="Vue vignettes">▦ Vignettes</button>
+    </div>
+  </div>
+
+  <div class="info" id="info" style="display:none;">
+    <div>
+      <span class="count" id="totalCount">0</span> résultats trouvés
+    </div>
+    <div class="pagination">
+      <button id="prevBtn">← Précédent</button>
+      <span id="pageInfo">Page 1 sur 1</span>
+      <button id="nextBtn">Suivant →</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="loading">Chargement…</div>
+  </div>
+
+  <div class="footer">By Velkora Consulting</div>
+
+  <!-- SVG placeholder colis -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-box" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 2 2 7v10l10 5 10-5V7l-10-5zm0 2.236L19.764 8 12 11.764 4.236 8 12 4.236zM4 9.618l7 3.5v7.764l-7-3.5V9.618zm9 11.264v-7.764l7-3.5v7.764l-7 3.5z"/>
+    </symbol>
+  </svg>
+
+  <script>
+    const PAGE_SIZE = 50;
+    let currentPage = 1;
+    let currentSearch = '';
+    let totalPages = 1;
+    let currentView = 'list'; // 'list' ou 'grid'
+
+    function pertBadge(value) {
+      if (value === null || value === undefined) return '<span class="pert pert-low">—</span>';
+      const n = Number(value);
+      let cls = 'pert-low';
+      if (n >= 70) cls = 'pert-high';
+      else if (n >= 30) cls = 'pert-mid';
+      return `<span class="pert ${cls}">${n}</span>`;
+    }
+
+    function photoOrPlaceholder(url, size) {
+      if (url && url.trim()) {
+        return `<img src="${escapeHtml(url)}" class="${size}" onerror="this.outerHTML='<div class=&quot;${size}-placeholder&quot;><svg width=&quot;60%&quot; height=&quot;60%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`;
       }
-    };
-  } catch (err) {
-    context.res = {
-      status: 500,
-      body: { error: err.message }
-    };
-  } finally {
-    if (connection) await connection.end();
-  }
-};
+      return `<div class="${size}-placeholder"><svg width="60%" height="60%"><use href="#icon-box"/></svg></div>`;
+    }
+
+    async function loadArticles() {
+      const content = document.getElementById('content');
+      const info = document.getElementById('info');
+      content.innerHTML = '<div class="loading">Chargement…</div>';
+      info.style.display = 'none';
+
+      try {
+        const params = new URLSearchParams({
+          page: currentPage,
+          pageSize: PAGE_SIZE
+        });
+        if (currentSearch) params.append('search', currentSearch);
+
+        const response = await fetch('/api/articles?' + params.toString());
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+
+        totalPages = data.totalPages;
+        
+        document.getElementById('totalCount').textContent = data.total.toLocaleString('fr-FR');
+        document.getElementById('pageInfo').textContent = `Page ${data.page} sur ${data.totalPages || 1}`;
+        document.getElementById('prevBtn').disabled = data.page <= 1;
+        document.getElementById('nextBtn').disabled = data.page >= data.totalPages;
+        info.style.display = 'flex';
+
+        if (data.articles.length === 0) {
+          content.innerHTML = '<div class="empty">Aucun article trouvé.</div>';
+          return;
+        }
+
+        if (currentView === 'list') {
+          renderList(data.articles);
+        } else {
+          renderGrid(data.articles);
+        }
+      } catch (err) {
+        content.innerHTML = `<div class="error">Erreur : ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderList(articles) {
+      const rows = articles.map(a => `
+        <tr>
+          <td>${photoOrPlaceholder(a.URL_PHOTO1, 'thumb')}</td>
+          <td>${escapeHtml(a.REF_JACTAL ?? '')}</td>
+          <td>${escapeHtml(a.LIBELLE_STANDART ?? '')}</td>
+          <td>${escapeHtml(a.NOM_FOURNISSEUR ?? '')}</td>
+          <td>${a.STOCK1 ?? 0}</td>
+          <td>${a.STOCK2 ?? 0}</td>
+          <td>${a.STOCK3 ?? 0}</td>
+          <td>${pertBadge(a.PERTINANCE)}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('content').innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Photo</th>
+              <th>Réf. Jactal</th>
+              <th>Libellé</th>
+              <th>Fournisseur</th>
+              <th>Stock 1</th>
+              <th>Stock 2</th>
+              <th>Stock 3</th>
+              <th>Pertinance</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderGrid(articles) {
+      const cards = articles.map(a => `
+        <div class="card">
+          ${photoOrPlaceholder(a.URL_PHOTO1, 'card-photo')}
+          <div class="card-body">
+            <div class="card-ref">${escapeHtml(a.REF_JACTAL ?? '')}</div>
+            <div class="card-title">${escapeHtml(a.LIBELLE_STANDART ?? '')}</div>
+            <div class="card-fourn">${escapeHtml(a.NOM_FOURNISSEUR ?? '')}</div>
+            <div class="card-meta">
+              <span class="card-stocks">S1:${a.STOCK1 ?? 0} · S2:${a.STOCK2 ?? 0} · S3:${a.STOCK3 ?? 0}</span>
+              ${pertBadge(a.PERTINANCE)}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('content').innerHTML = `<div class="grid">${cards}</div>`;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Event handlers
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      currentSearch = document.getElementById('searchInput').value.trim();
+      currentPage = 1;
+      loadArticles();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      currentSearch = '';
+      currentPage = 1;
+      loadArticles();
+    });
+
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('searchBtn').click();
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        loadArticles();
+      }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadArticles();
+      }
+    });
+
+    document.getElementById('viewList').addEventListener('click', () => {
+      currentView = 'list';
+      document.getElementById('viewList').classList.add('active');
+      document.getElementById('viewGrid').classList.remove('active');
+      loadArticles();
+    });
+
+    document.getElementById('viewGrid').addEventListener('click', () => {
+      currentView = 'grid';
+      document.getElementById('viewGrid').classList.add('active');
+      document.getElementById('viewList').classList.remove('active');
+      loadArticles();
+    });
+
+    loadArticles();
+  </script>
+</body>
+</html>
