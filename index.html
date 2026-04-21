@@ -6,277 +6,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     * { box-sizing: border-box; }
-    body { 
-      font-family: 'Segoe UI', Arial, sans-serif; 
-      margin: 0; 
-      padding: 20px; 
-      background: #f5f5f7; 
-      color: #222;
-    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f7; color: #222; }
     h1 { color: #1e3a5f; margin-top: 0; }
 
-    .toolbar {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .toolbar input {
-      flex: 1;
-      min-width: 200px;
-      padding: 10px 14px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    .toolbar button {
-      padding: 10px 18px;
-      background: #1e3a5f;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-    }
+    .toolbar { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .toolbar input { flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .toolbar button { padding: 10px 18px; background: #1e3a5f; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
     .toolbar button:hover { background: #2a4d7e; }
     .toolbar button:disabled { background: #999; cursor: not-allowed; }
+    .toolbar button.secondary { background: white; color: #1e3a5f; border: 1px solid #1e3a5f; }
+    .toolbar button.secondary:hover { background: #eef2f7; }
 
-    .view-toggle {
-      display: flex;
-      gap: 0;
-      border: 1px solid #1e3a5f;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    .view-toggle button {
-      padding: 10px 14px;
-      background: white;
-      color: #1e3a5f;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      border-radius: 0;
-    }
-    .view-toggle button.active {
-      background: #1e3a5f;
-      color: white;
-    }
+    .filter-badge { display: inline-block; margin-left: 6px; background: #d33; color: white; border-radius: 10px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
+
+    .view-toggle { display: flex; gap: 0; border: 1px solid #1e3a5f; border-radius: 6px; overflow: hidden; }
+    .view-toggle button { padding: 10px 14px; background: white; color: #1e3a5f; border: none; cursor: pointer; font-size: 14px; border-radius: 0; }
+    .view-toggle button.active { background: #1e3a5f; color: white; }
     .view-toggle button:hover:not(.active) { background: #eef2f7; }
 
-    .info {
-      background: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-size: 14px;
-      color: #555;
-    }
+    .filters-panel { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; display: none; }
+    .filters-panel.open { display: block; }
+    .filters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 12px; font-weight: 600; color: #1e3a5f; }
+
+    .multi-select { position: relative; }
+    .multi-select-btn { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; background: white; cursor: pointer; text-align: left; font-size: 13px; color: #555; min-height: 36px; }
+    .multi-select-btn:hover { border-color: #1e3a5f; }
+    .multi-select-btn.has-values { color: #1e3a5f; font-weight: 500; background: #eef2f7; }
+    .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 6px; max-height: 300px; overflow: hidden; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin-top: 4px; }
+    .multi-select-dropdown.open { display: flex; flex-direction: column; }
+    .multi-select-search { padding: 8px; border-bottom: 1px solid #eee; border-radius: 0; font-size: 13px; }
+    .multi-select-search input { width: 100%; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+    .multi-select-list { flex: 1; overflow-y: auto; max-height: 240px; }
+    .multi-select-item { padding: 6px 10px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .multi-select-item:hover { background: #eef2f7; }
+    .multi-select-item input[type="checkbox"] { margin: 0; }
+
+    .simple-select { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; background: white; font-size: 13px; }
+
+    .stock-filter { display: flex; gap: 6px; }
+    .stock-filter select { padding: 8px 6px; border: 1px solid #ccc; border-radius: 6px; background: white; font-size: 13px; width: 60px; }
+    .stock-filter input { flex: 1; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; min-width: 0; }
+
+    .info { background: white; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 14px; color: #555; }
     .info .count { font-weight: 600; color: #1e3a5f; }
     .pagination { display: flex; gap: 8px; align-items: center; }
-    .pagination button {
-      padding: 6px 14px;
-      background: white;
-      border: 1px solid #1e3a5f;
-      color: #1e3a5f;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
+    .pagination button { padding: 6px 14px; background: white; border: 1px solid #1e3a5f; color: #1e3a5f; border-radius: 6px; cursor: pointer; font-size: 14px; }
     .pagination button:hover:not(:disabled) { background: #1e3a5f; color: white; }
     .pagination button:disabled { border-color: #ccc; color: #999; cursor: not-allowed; }
 
-    /* VUE LISTE */
-    table {
-      width: 100%;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border-collapse: collapse;
-    }
-    th {
-      background: #1e3a5f;
-      color: white;
-      padding: 12px;
-      text-align: left;
-      font-weight: 500;
-      font-size: 13px;
-    }
-    td {
-      padding: 8px 12px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
-      vertical-align: middle;
-    }
+    table { width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-collapse: collapse; }
+    th { background: #1e3a5f; color: white; padding: 12px; text-align: left; font-weight: 500; font-size: 13px; }
+    td { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
     tr:hover { background: #f9f9fb; }
-    .thumb {
-      width: 50px;
-      height: 50px;
-      object-fit: cover;
-      border-radius: 4px;
-      background: #f0f0f0;
-    }
-    .thumb-placeholder {
-      width: 50px;
-      height: 50px;
-      border-radius: 4px;
-      background: #eef2f7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #1e3a5f;
-    }
+    .thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; background: #f0f0f0; }
+    .thumb-placeholder { width: 50px; height: 50px; border-radius: 4px; background: #eef2f7; display: flex; align-items: center; justify-content: center; color: #1e3a5f; }
 
-    /* VUE VIGNETTES */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 15px;
-    }
+    .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; }
     @media (max-width: 1400px) { .grid { grid-template-columns: repeat(5, 1fr); } }
     @media (max-width: 1100px) { .grid { grid-template-columns: repeat(4, 1fr); } }
     @media (max-width: 850px)  { .grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 600px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
 
-    .card {
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: transform 0.15s, box-shadow 0.15s;
-      display: flex;
-      flex-direction: column;
-    }
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .card-photo {
-      width: 100%;
-      aspect-ratio: 1;
-      object-fit: cover;
-      background: #eef2f7;
-    }
-    .card-photo-placeholder {
-      width: 100%;
-      aspect-ratio: 1;
-      background: #eef2f7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #1e3a5f;
-    }
-    .card-body {
-      padding: 10px 12px;
-      font-size: 13px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .card-ref {
-      font-family: monospace;
-      color: #666;
-      font-size: 12px;
-    }
-    .card-title {
-      font-weight: 500;
-      color: #222;
-      line-height: 1.3;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .card-fourn {
-      color: #666;
-      font-size: 12px;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .card-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 6px;
-      padding-top: 8px;
-      border-top: 1px solid #eee;
-      font-size: 12px;
-    }
-    .card-stocks {
-      color: #555;
-      font-size: 11px;
-    }
+    .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.15s, box-shadow 0.15s; display: flex; flex-direction: column; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .card-photo { width: 100%; aspect-ratio: 1; object-fit: cover; background: #eef2f7; }
+    .card-photo-placeholder { width: 100%; aspect-ratio: 1; background: #eef2f7; display: flex; align-items: center; justify-content: center; color: #1e3a5f; }
+    .card-body { padding: 10px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+    .card-ref { font-family: monospace; color: #666; font-size: 12px; }
+    .card-title { font-weight: 500; color: #222; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-fourn { color: #666; font-size: 12px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 8px; border-top: 1px solid #eee; font-size: 12px; }
+    .card-stocks { color: #555; font-size: 11px; }
 
-    /* PERTINANCE badge */
-    .pert {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 600;
-      color: white;
-      min-width: 40px;
-      text-align: center;
-    }
+    .pert { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: white; min-width: 40px; text-align: center; }
     .pert-high { background: #2e7d32; }
     .pert-mid  { background: #ed6c02; }
     .pert-low  { background: #999; }
 
-    .loading, .error, .empty {
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      text-align: center;
-      color: #666;
-    }
-    .error { 
-      border-left: 4px solid #d33; 
-      color: #d33;
-      text-align: left;
-    }
-    .footer { 
-      margin-top: 20px; 
-      font-size: 12px; 
-      color: #888; 
-      text-align: center;
-    }
+    .loading, .error, .empty { padding: 20px; background: white; border-radius: 8px; text-align: center; color: #666; }
+    .error { border-left: 4px solid #d33; color: #d33; text-align: left; }
+    .footer { margin-top: 20px; font-size: 12px; color: #888; text-align: center; }
   </style>
 </head>
 <body>
   <h1>JacTool — Catalogue Articles</h1>
-  
+
   <div class="toolbar">
-    <input 
-      type="text" 
-      id="searchInput" 
-      placeholder="Rechercher (code, fournisseur, EAN, libellé, marque, licence...)"
-      autocomplete="off"
-    >
+    <input type="text" id="searchInput" placeholder="Rechercher (code, fournisseur, EAN, libellé, marque, licence...)" autocomplete="off">
     <button id="searchBtn">Rechercher</button>
-    <button id="resetBtn">Réinitialiser</button>
+    <button id="toggleFiltersBtn" class="secondary">Filtres <span class="filter-badge" id="filterBadge" style="display:none;">0</span></button>
+    <button id="resetBtn" class="secondary">Réinitialiser</button>
     <div class="view-toggle">
       <button id="viewList" class="active" title="Vue liste">☰ Liste</button>
       <button id="viewGrid" title="Vue vignettes">▦ Vignettes</button>
     </div>
   </div>
 
-  <div class="info" id="info" style="display:none;">
-    <div>
-      <span class="count" id="totalCount">0</span> résultats trouvés
+  <div class="filters-panel" id="filtersPanel">
+    <div class="filters-grid" id="filtersGrid">
+      <div class="loading">Chargement des filtres…</div>
     </div>
+  </div>
+
+  <div class="info" id="info" style="display:none;">
+    <div><span class="count" id="totalCount">0</span> résultats trouvés</div>
     <div class="pagination">
       <button id="prevBtn">← Précédent</button>
       <span id="pageInfo">Page 1 sur 1</span>
@@ -284,13 +119,10 @@
     </div>
   </div>
 
-  <div id="content">
-    <div class="loading">Chargement…</div>
-  </div>
+  <div id="content"><div class="loading">Chargement…</div></div>
 
   <div class="footer">By Velkora Consulting</div>
 
-  <!-- SVG placeholder colis -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="icon-box" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 2 2 7v10l10 5 10-5V7l-10-5zm0 2.236L19.764 8 12 11.764 4.236 8 12 4.236zM4 9.618l7 3.5v7.764l-7-3.5V9.618zm9 11.264v-7.764l7-3.5v7.764l-7 3.5z"/>
@@ -301,8 +133,218 @@
     const PAGE_SIZE = 50;
     let currentPage = 1;
     let currentSearch = '';
+    let currentView = 'list';
     let totalPages = 1;
-    let currentView = 'list'; // 'list' ou 'grid'
+
+    // État des filtres
+    const filters = {
+      fournisseurs: new Set(), marques: new Set(), licences: new Set(),
+      actif: '', statuts: new Set(),
+      cat_trad: new Set(), sous_cat_trad: new Set(),
+      cat_web: new Set(), sous_cat_web: new Set(),
+      acheteurs: new Set(),
+      stock1_op: '', stock1_val: '',
+      stock2_op: '', stock2_val: '',
+      stock3_op: '', stock3_val: '',
+    };
+
+    let filterOptions = null; // chargé depuis /api/filter-options
+
+    // --- Chargement initial des options de filtres ---
+    async function loadFilterOptions() {
+      try {
+        const resp = await fetch('/api/filter-options');
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        filterOptions = await resp.json();
+        renderFilters();
+      } catch (err) {
+        document.getElementById('filtersGrid').innerHTML = `<div class="error">Erreur chargement filtres : ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    // --- Rendu des filtres ---
+    function renderFilters() {
+      const grid = document.getElementById('filtersGrid');
+      grid.innerHTML = '';
+
+      grid.appendChild(makeMultiSelect('fournisseurs', 'Fournisseur', filterOptions.fournisseurs));
+      grid.appendChild(makeMultiSelect('marques', 'Marque', filterOptions.marques));
+      grid.appendChild(makeMultiSelect('licences', 'Licence', filterOptions.licences));
+      grid.appendChild(makeSimpleSelect('actif', 'Actif', [
+        { value: '', label: '-- Tous --' },
+        { value: '1', label: 'Oui' },
+        { value: '0', label: 'Non' },
+      ]));
+      grid.appendChild(makeMultiSelect('statuts', 'Statut', filterOptions.statuts, true));
+      grid.appendChild(makeMultiSelect('cat_trad', 'Cat. trad.', filterOptions.cat_trad));
+      grid.appendChild(makeMultiSelect('sous_cat_trad', 'Sous-cat. trad.', filterOptions.sous_cat_trad));
+      grid.appendChild(makeMultiSelect('cat_web', 'Cat. web', filterOptions.cat_web));
+      grid.appendChild(makeMultiSelect('sous_cat_web', 'Sous-cat. web', filterOptions.sous_cat_web));
+      grid.appendChild(makeMultiSelect('acheteurs', 'Acheteur', filterOptions.acheteurs));
+      grid.appendChild(makeStockFilter('stock1', 'Stock 1'));
+      grid.appendChild(makeStockFilter('stock2', 'Stock 2'));
+      grid.appendChild(makeStockFilter('stock3', 'Stock 3'));
+    }
+
+    function makeMultiSelect(key, label, items, isStatut = false) {
+      const group = document.createElement('div');
+      group.className = 'filter-group';
+      group.innerHTML = `
+        <label>${label}</label>
+        <div class="multi-select">
+          <button type="button" class="multi-select-btn" data-key="${key}">-- Tous --</button>
+          <div class="multi-select-dropdown">
+            <div class="multi-select-search"><input type="text" placeholder="Rechercher…"></div>
+            <div class="multi-select-list"></div>
+          </div>
+        </div>
+      `;
+      const btn = group.querySelector('.multi-select-btn');
+      const dropdown = group.querySelector('.multi-select-dropdown');
+      const searchInput = group.querySelector('input');
+      const list = group.querySelector('.multi-select-list');
+
+      function renderList(filter = '') {
+        const lowerFilter = filter.toLowerCase();
+        list.innerHTML = items
+          .filter(item => {
+            const val = isStatut ? item.label : item;
+            return val.toLowerCase().includes(lowerFilter);
+          })
+          .map(item => {
+            const val = isStatut ? item.code : item;
+            const display = isStatut ? item.label : item;
+            const checked = filters[key].has(val) ? 'checked' : '';
+            return `<label class="multi-select-item"><input type="checkbox" value="${escapeHtml(val)}" ${checked}>${escapeHtml(display)}</label>`;
+          })
+          .join('');
+        list.querySelectorAll('input').forEach(cb => {
+          cb.addEventListener('change', e => {
+            if (e.target.checked) filters[key].add(e.target.value);
+            else filters[key].delete(e.target.value);
+            updateMultiSelectBtn(btn, key, items, isStatut);
+            updateFilterBadge();
+            currentPage = 1;
+            loadArticles();
+          });
+        });
+      }
+
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        document.querySelectorAll('.multi-select-dropdown').forEach(d => { if (d !== dropdown) d.classList.remove('open'); });
+        dropdown.classList.toggle('open');
+        if (dropdown.classList.contains('open')) { searchInput.value = ''; renderList(); searchInput.focus(); }
+      });
+      searchInput.addEventListener('input', e => renderList(e.target.value));
+      searchInput.addEventListener('click', e => e.stopPropagation());
+      dropdown.addEventListener('click', e => e.stopPropagation());
+
+      updateMultiSelectBtn(btn, key, items, isStatut);
+      return group;
+    }
+
+    function updateMultiSelectBtn(btn, key, items, isStatut) {
+      const count = filters[key].size;
+      if (count === 0) {
+        btn.textContent = '-- Tous --';
+        btn.classList.remove('has-values');
+      } else if (count === 1) {
+        const val = [...filters[key]][0];
+        const display = isStatut ? (items.find(i => i.code === val)?.label || val) : val;
+        btn.textContent = display;
+        btn.classList.add('has-values');
+      } else {
+        btn.textContent = `${count} sélectionnés`;
+        btn.classList.add('has-values');
+      }
+    }
+
+    function makeSimpleSelect(key, label, options) {
+      const group = document.createElement('div');
+      group.className = 'filter-group';
+      const opts = options.map(o => `<option value="${o.value}" ${filters[key] === o.value ? 'selected' : ''}>${o.label}</option>`).join('');
+      group.innerHTML = `<label>${label}</label><select class="simple-select">${opts}</select>`;
+      group.querySelector('select').addEventListener('change', e => {
+        filters[key] = e.target.value;
+        updateFilterBadge();
+        currentPage = 1;
+        loadArticles();
+      });
+      return group;
+    }
+
+    function makeStockFilter(key, label) {
+      const group = document.createElement('div');
+      group.className = 'filter-group';
+      group.innerHTML = `
+        <label>${label}</label>
+        <div class="stock-filter">
+          <select>
+            <option value="">—</option>
+            <option value=">">&gt;</option>
+            <option value=">=">&ge;</option>
+            <option value="<">&lt;</option>
+            <option value="<=">&le;</option>
+            <option value="=">=</option>
+            <option value="!=">&ne;</option>
+          </select>
+          <input type="number" placeholder="valeur">
+        </div>
+      `;
+      const select = group.querySelector('select');
+      const input = group.querySelector('input');
+      select.addEventListener('change', () => { filters[key + '_op'] = select.value; updateFilterBadge(); currentPage = 1; loadArticles(); });
+      input.addEventListener('change', () => { filters[key + '_val'] = input.value; updateFilterBadge(); currentPage = 1; loadArticles(); });
+      return group;
+    }
+
+    function updateFilterBadge() {
+      let count = 0;
+      for (const k in filters) {
+        const v = filters[k];
+        if (v instanceof Set) { if (v.size > 0) count++; }
+        else if (v) count++;
+      }
+      const badge = document.getElementById('filterBadge');
+      if (count > 0) { badge.textContent = count; badge.style.display = 'inline-block'; }
+      else { badge.style.display = 'none'; }
+    }
+
+    // --- Chargement des articles ---
+    async function loadArticles() {
+      const content = document.getElementById('content');
+      const info = document.getElementById('info');
+      content.innerHTML = '<div class="loading">Chargement…</div>';
+      info.style.display = 'none';
+
+      try {
+        const params = new URLSearchParams({ page: currentPage, pageSize: PAGE_SIZE });
+        if (currentSearch) params.append('search', currentSearch);
+        for (const k in filters) {
+          const v = filters[k];
+          if (v instanceof Set && v.size > 0) params.append(k, [...v].join(','));
+          else if (typeof v === 'string' && v) params.append(k, v);
+        }
+
+        const response = await fetch('/api/articles?' + params.toString());
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+
+        totalPages = data.totalPages;
+        document.getElementById('totalCount').textContent = data.total.toLocaleString('fr-FR');
+        document.getElementById('pageInfo').textContent = `Page ${data.page} sur ${data.totalPages || 1}`;
+        document.getElementById('prevBtn').disabled = data.page <= 1;
+        document.getElementById('nextBtn').disabled = data.page >= data.totalPages;
+        info.style.display = 'flex';
+
+        if (data.articles.length === 0) { content.innerHTML = '<div class="empty">Aucun article trouvé.</div>'; return; }
+        if (currentView === 'list') renderList(data.articles);
+        else renderGrid(data.articles);
+      } catch (err) {
+        content.innerHTML = `<div class="error">Erreur : ${escapeHtml(err.message)}</div>`;
+      }
+    }
 
     function pertBadge(value) {
       if (value === null || value === undefined) return '<span class="pert pert-low">—</span>';
@@ -320,46 +362,6 @@
       return `<div class="${size}-placeholder"><svg width="60%" height="60%"><use href="#icon-box"/></svg></div>`;
     }
 
-    async function loadArticles() {
-      const content = document.getElementById('content');
-      const info = document.getElementById('info');
-      content.innerHTML = '<div class="loading">Chargement…</div>';
-      info.style.display = 'none';
-
-      try {
-        const params = new URLSearchParams({
-          page: currentPage,
-          pageSize: PAGE_SIZE
-        });
-        if (currentSearch) params.append('search', currentSearch);
-
-        const response = await fetch('/api/articles?' + params.toString());
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        const data = await response.json();
-
-        totalPages = data.totalPages;
-        
-        document.getElementById('totalCount').textContent = data.total.toLocaleString('fr-FR');
-        document.getElementById('pageInfo').textContent = `Page ${data.page} sur ${data.totalPages || 1}`;
-        document.getElementById('prevBtn').disabled = data.page <= 1;
-        document.getElementById('nextBtn').disabled = data.page >= data.totalPages;
-        info.style.display = 'flex';
-
-        if (data.articles.length === 0) {
-          content.innerHTML = '<div class="empty">Aucun article trouvé.</div>';
-          return;
-        }
-
-        if (currentView === 'list') {
-          renderList(data.articles);
-        } else {
-          renderGrid(data.articles);
-        }
-      } catch (err) {
-        content.innerHTML = `<div class="error">Erreur : ${escapeHtml(err.message)}</div>`;
-      }
-    }
-
     function renderList(articles) {
       const rows = articles.map(a => `
         <tr>
@@ -371,26 +373,13 @@
           <td>${a.STOCK2 ?? 0}</td>
           <td>${a.STOCK3 ?? 0}</td>
           <td>${pertBadge(a.PERTINANCE)}</td>
-        </tr>
-      `).join('');
+        </tr>`).join('');
 
       document.getElementById('content').innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Photo</th>
-              <th>Réf. Jactal</th>
-              <th>Libellé</th>
-              <th>Fournisseur</th>
-              <th>Stock 1</th>
-              <th>Stock 2</th>
-              <th>Stock 3</th>
-              <th>Pertinance</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
+        <table><thead><tr>
+          <th>Photo</th><th>Réf. Jactal</th><th>Libellé</th><th>Fournisseur</th>
+          <th>Stock 1</th><th>Stock 2</th><th>Stock 3</th><th>Pertinance</th>
+        </tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     function renderGrid(articles) {
@@ -406,67 +395,52 @@
               ${pertBadge(a.PERTINANCE)}
             </div>
           </div>
-        </div>
-      `).join('');
-
+        </div>`).join('');
       document.getElementById('content').innerHTML = `<div class="grid">${cards}</div>`;
     }
 
     function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // Event handlers
+    // Events
     document.getElementById('searchBtn').addEventListener('click', () => {
       currentSearch = document.getElementById('searchInput').value.trim();
-      currentPage = 1;
-      loadArticles();
+      currentPage = 1; loadArticles();
     });
-
     document.getElementById('resetBtn').addEventListener('click', () => {
       document.getElementById('searchInput').value = '';
       currentSearch = '';
-      currentPage = 1;
-      loadArticles();
+      for (const k in filters) { if (filters[k] instanceof Set) filters[k].clear(); else filters[k] = ''; }
+      renderFilters(); updateFilterBadge();
+      currentPage = 1; loadArticles();
     });
-
-    document.getElementById('searchInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') document.getElementById('searchBtn').click();
-    });
-
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      if (currentPage > 1) {
-        currentPage--;
-        loadArticles();
-      }
-    });
-
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      if (currentPage < totalPages) {
-        currentPage++;
-        loadArticles();
-      }
-    });
-
+    document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('searchBtn').click(); });
+    document.getElementById('prevBtn').addEventListener('click', () => { if (currentPage > 1) { currentPage--; loadArticles(); } });
+    document.getElementById('nextBtn').addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; loadArticles(); } });
     document.getElementById('viewList').addEventListener('click', () => {
       currentView = 'list';
       document.getElementById('viewList').classList.add('active');
       document.getElementById('viewGrid').classList.remove('active');
       loadArticles();
     });
-
     document.getElementById('viewGrid').addEventListener('click', () => {
       currentView = 'grid';
       document.getElementById('viewGrid').classList.add('active');
       document.getElementById('viewList').classList.remove('active');
       loadArticles();
     });
+    document.getElementById('toggleFiltersBtn').addEventListener('click', () => {
+      document.getElementById('filtersPanel').classList.toggle('open');
+    });
 
+    // Fermer les dropdowns quand on clique ailleurs
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
+    });
+
+    // Démarrage
+    loadFilterOptions();
     loadArticles();
   </script>
 </body>
