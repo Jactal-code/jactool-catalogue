@@ -936,9 +936,26 @@
       const validateBtn = document.getElementById('exportValidateBtn');
       const count = selectedColumns.length;
       const nbRows = currentTotal;
-      let txt = `${count} colonne${count > 1 ? 's' : ''} · ${nbRows.toLocaleString('fr-FR')} ligne${nbRows > 1 ? 's' : ''} à exporter`;
+      const totalCells = count * nbRows;
+      const MAX_CELLS = 2_000_000;
+
+      let txt = `${count} colonne${count > 1 ? 's' : ''} · ${nbRows.toLocaleString('fr-FR')} ligne${nbRows > 1 ? 's' : ''} · ${totalCells.toLocaleString('fr-FR')} cellule${totalCells > 1 ? 's' : ''}`;
       info.className = 'modal-footer-info';
-      if (nbRows > 10000) { txt += ' ⚠️ Au-delà de 10 000 lignes, l\'export peut prendre plusieurs minutes'; info.className = 'modal-footer-info warning'; }
+
+      if (totalCells > MAX_CELLS) {
+        const maxRows = Math.floor(MAX_CELLS / Math.max(count, 1)).toLocaleString('fr-FR');
+        const maxCols = Math.floor(MAX_CELLS / Math.max(nbRows, 1));
+        txt = `❌ Trop volumineux (${(totalCells/1_000_000).toFixed(1)} M cellules, max 2 M). Réduisez à ${maxRows} lignes OU ${maxCols} colonnes.`;
+        info.className = 'modal-footer-info warning';
+        info.textContent = txt;
+        validateBtn.disabled = true;
+        return;
+      }
+
+      if (totalCells > 500_000) {
+        txt += ' ⚠️ Export volumineux, peut prendre 30-60 secondes';
+        info.className = 'modal-footer-info warning';
+      }
       info.textContent = txt;
       validateBtn.disabled = count === 0;
     }
@@ -950,7 +967,18 @@
       try {
         const params = buildQueryParams({ columns: selectedColumns.join(',') });
         const response = await fetch('/api/export?' + params.toString());
-        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        if (!response.ok) {
+          // Essayer de parser une erreur structurée du backend
+          let errPayload = null;
+          try { errPayload = await response.json(); } catch (_) {}
+          if (errPayload && errPayload.error === 'EXPORT_TOO_LARGE') {
+            showExportTooLargeError(errPayload);
+            return;
+          }
+          throw new Error((errPayload && errPayload.message) || ('HTTP ' + response.status));
+        }
+
         const blob = await response.blob();
         const disposition = response.headers.get('Content-Disposition') || '';
         const match = disposition.match(/filename="(.+)"/);
@@ -966,6 +994,16 @@
       } finally {
         validateBtn.disabled = false; validateBtn.textContent = 'Exporter';
       }
+    }
+
+    function showExportTooLargeError(payload) {
+      const info = document.getElementById('exportInfo');
+      info.className = 'modal-footer-info warning';
+      const rows = payload.totalRows.toLocaleString('fr-FR');
+      const cells = (payload.totalCells / 1_000_000).toFixed(1);
+      const maxRows = payload.suggestedMaxRows.toLocaleString('fr-FR');
+      const maxCols = payload.suggestedMaxColumns;
+      info.innerHTML = `⚠️ <strong>Export trop volumineux</strong> : ${rows} lignes × ${payload.totalColumns} colonnes = ${cells} M cellules (max 2 M). <br>💡 Réduisez à max <strong>${maxRows} lignes</strong> (avec les mêmes colonnes) ou max <strong>${maxCols} colonnes</strong> (avec les mêmes filtres).`;
     }
 
     function buildQueryParams(extraParams = {}) {
