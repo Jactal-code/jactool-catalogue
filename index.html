@@ -937,7 +937,7 @@
       const count = selectedColumns.length;
       const nbRows = currentTotal;
       const totalCells = count * nbRows;
-      const MAX_CELLS = 2_000_000;
+      const MAX_CELLS = 50_000_000;
 
       let txt = `${count} colonne${count > 1 ? 's' : ''} · ${nbRows.toLocaleString('fr-FR')} ligne${nbRows > 1 ? 's' : ''} · ${totalCells.toLocaleString('fr-FR')} cellule${totalCells > 1 ? 's' : ''}`;
       info.className = 'modal-footer-info';
@@ -945,16 +945,18 @@
       if (totalCells > MAX_CELLS) {
         const maxRows = Math.floor(MAX_CELLS / Math.max(count, 1)).toLocaleString('fr-FR');
         const maxCols = Math.floor(MAX_CELLS / Math.max(nbRows, 1));
-        txt = `❌ Trop volumineux (${(totalCells/1_000_000).toFixed(1)} M cellules, max 2 M). Réduisez à ${maxRows} lignes OU ${maxCols} colonnes.`;
+        txt = `❌ Trop volumineux (${(totalCells/1_000_000).toFixed(1)} M cellules, max 50 M). Réduisez à ${maxRows} lignes OU ${maxCols} colonnes.`;
         info.className = 'modal-footer-info warning';
         info.textContent = txt;
         validateBtn.disabled = true;
         return;
       }
 
-      if (totalCells > 500_000) {
-        txt += ' ⚠️ Export volumineux, peut prendre 30-60 secondes';
+      if (totalCells > 10_000_000) {
+        txt += ' ⚠️ Volumineux : plusieurs minutes d\'attente';
         info.className = 'modal-footer-info warning';
+      } else if (totalCells > 1_000_000) {
+        txt += ' ⏱️ Peut prendre 30s à 2 min';
       }
       info.textContent = txt;
       validateBtn.disabled = count === 0;
@@ -963,7 +965,7 @@
     async function doExport() {
       const validateBtn = document.getElementById('exportValidateBtn');
       validateBtn.disabled = true;
-      validateBtn.textContent = 'Export en cours…';
+      validateBtn.textContent = 'Export en cours… patience';
       try {
         const params = buildQueryParams({ columns: selectedColumns.join(',') });
         const response = await fetch('/api/export?' + params.toString());
