@@ -183,9 +183,6 @@
       background: var(--bg-card);
       border-radius: 8px;
       box-shadow: var(--shadow-sm);
-      /* Container scrollable : max-height pour activer la sticky header */
-      max-height: calc(100vh - 240px);
-      min-height: 400px;
     }
     /* Scrollbar horizontale plus visible */
     .table-wrap::-webkit-scrollbar { height: 12px; width: 10px; }
@@ -229,44 +226,42 @@
       background: var(--bg-card);
       color: var(--text-main);
     }
-    td.num { font-family: monospace; text-align: right; }
-    td.truncate { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    td.num { font-family: monospace; text-align: right; white-space: nowrap; }
+    /* Les cellules texte peuvent désormais wrapper sur plusieurs lignes */
+    td.truncate { max-width: 400px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4; }
     tr.clickable { cursor: pointer; }
     tr.clickable:hover td { background: var(--bg-hover); }
+    /* Quand on sélectionne du texte dans une cellule, ne pas déclencher le click */
+    tr.clickable td.selecting { cursor: text; }
 
-    /* Colonnes sticky (3 premières : Photo, REF, puis la 3ème visible) */
+    /* Colonnes sticky (seulement les 2 premières : Photo + REF) */
     thead th.col-sticky-1,
     thead th.col-sticky-2,
-    thead th.col-sticky-3,
     tbody td.col-sticky-1,
-    tbody td.col-sticky-2,
-    tbody td.col-sticky-3 {
+    tbody td.col-sticky-2 {
       position: sticky;
     }
+    /* Col 1 : Photo (largeur fixe) */
     thead th.col-sticky-1,
     tbody td.col-sticky-1 { left: 0; width: 74px; min-width: 74px; max-width: 74px; }
+    /* Col 2 : REF (sticky mais redimensionnable, largeur par défaut modérée) */
     thead th.col-sticky-2,
-    tbody td.col-sticky-2 { left: 74px; min-width: 150px; }
-    thead th.col-sticky-3,
-    tbody td.col-sticky-3 { left: 224px; min-width: 180px; }
+    tbody td.col-sticky-2 { left: 74px; min-width: 110px; }
 
     thead th.col-sticky-1 { z-index: 11; }
     thead th.col-sticky-2 { z-index: 11; }
-    thead th.col-sticky-3 { z-index: 11; }
     tbody td.col-sticky-1 { z-index: 3; background: var(--bg-card); }
     tbody td.col-sticky-2 { z-index: 3; background: var(--bg-card); }
-    tbody td.col-sticky-3 { z-index: 3; background: var(--bg-card); }
 
     /* Fond correct au survol de ligne */
     tr.clickable:hover td.col-sticky-1,
-    tr.clickable:hover td.col-sticky-2,
-    tr.clickable:hover td.col-sticky-3 { background: var(--bg-hover); }
+    tr.clickable:hover td.col-sticky-2 { background: var(--bg-hover); }
 
     /* Ombre à droite de la dernière col sticky pour bien indiquer qu'elle est fixe */
-    thead th.col-sticky-3,
-    tbody td.col-sticky-3 { box-shadow: 4px 0 6px -2px rgba(0,0,0,0.15); }
-    [data-theme="dark"] thead th.col-sticky-3,
-    [data-theme="dark"] tbody td.col-sticky-3 { box-shadow: 4px 0 6px -2px rgba(0,0,0,0.4); }
+    thead th.col-sticky-2,
+    tbody td.col-sticky-2 { box-shadow: 4px 0 6px -2px rgba(0,0,0,0.15); }
+    [data-theme="dark"] thead th.col-sticky-2,
+    [data-theme="dark"] tbody td.col-sticky-2 { box-shadow: 4px 0 6px -2px rgba(0,0,0,0.4); }
 
     .thumb { width: 50px; height: 50px; object-fit: contain; border-radius: 4px; background: var(--bg-card-alt); display: block; }
     .thumb-placeholder { width: 50px; height: 50px; border-radius: 4px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; color: var(--accent); }
@@ -444,35 +439,47 @@
       position: absolute;
       top: 4px;
       right: 4px;
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.65);
-      color: white;
-      border: none;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      border: 2px solid rgba(255,255,255,0.5);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 13px;
       opacity: 0;
       transition: opacity 0.15s, background 0.15s, transform 0.15s;
-      z-index: 2;
-      line-height: 0;
+      z-index: 10;
       padding: 0;
+      font-weight: 700;
+      line-height: 1;
     }
-    .img-wrap:hover .img-download-btn {
+    /* Le bouton reste visible tout le temps sur le détail (la photo est grande, le user la voit bien) */
+    .detail-photo-wrap .img-download-btn {
+      opacity: 1;
+      top: 6px;
+      right: 6px;
+      width: 32px;
+      height: 32px;
+      font-size: 15px;
+    }
+    /* Les autres endroits : visible au hover */
+    .img-wrap:hover .img-download-btn,
+    .card-photo-wrap:hover .img-download-btn,
+    .photo-thumb:hover .img-download-btn {
       opacity: 1;
     }
     .img-download-btn:hover {
       background: var(--accent);
       transform: scale(1.1);
+      border-color: rgba(255,255,255,0.8);
     }
     /* Taille plus grande pour les vignettes */
     .card-photo-wrap .img-download-btn { top: 6px; right: 6px; width: 30px; height: 30px; font-size: 14px; }
-    /* Plus grand dans le détail */
-    .detail-photo-wrap .img-download-btn { top: 8px; right: 8px; width: 32px; height: 32px; font-size: 15px; }
-    .detail-photo-wrap { position: relative; display: inline-block; }
+    .detail-photo-wrap { position: relative; display: inline-block; line-height: 0; }
     /* Dans les photos multiples du détail */
     .photo-thumb { position: relative; }
     .photo-thumb .img-download-btn { width: 22px; height: 22px; font-size: 11px; top: 3px; right: 3px; }
@@ -1132,8 +1139,9 @@
     let resizeState = null;
 
     function attachResizeHandles() {
-      // On attache sur les th non-sticky (sticky a des largeurs fixes)
-      const ths = document.querySelectorAll('table thead th:not(.col-sticky-1):not(.col-sticky-2):not(.col-sticky-3)');
+      // On attache sur TOUS les th sauf la photo (col-sticky-1) qui est fixe à 74px
+      // La col-sticky-2 (REF) est sticky MAIS redimensionnable
+      const ths = document.querySelectorAll('table thead th:not(.col-sticky-1)');
       ths.forEach(th => {
         if (th.querySelector('.col-resize-handle')) return; // déjà ajouté
         th.classList.add('resizable');
@@ -2563,13 +2571,13 @@
 
     function renderList(articles) {
       const cols = [...visibleColumns];
-      // 3 premières colonnes sticky : Photo + 2 premières de visibleColumns (généralement REF + LIBELLE ou autres)
+      // 2 premières colonnes sticky : Photo + 1ère de visibleColumns (généralement REF)
       const headerHtml = [`<th class="col-sticky-1">Photo</th>`].concat(cols.map((key, idx) => {
         const info = COLUMN_INFO[key];
         const label = info ? info.label : key;
         const sortKey = SORTABLE_MAP[key];
-        // Les 2 premières colonnes de visibleColumns deviennent col-sticky-2 et col-sticky-3
-        const stickyClass = idx === 0 ? ' col-sticky-2' : (idx === 1 ? ' col-sticky-3' : '');
+        // La 1ère colonne de visibleColumns devient col-sticky-2
+        const stickyClass = idx === 0 ? ' col-sticky-2' : '';
         if (sortKey) {
           const active = currentSort === sortKey ? 'active' : '';
           return `<th class="sortable ${active}${stickyClass}" data-sort="${sortKey}">${escapeHtml(label)}<span class="sort-arrow">${sortArrow(sortKey)}</span></th>`;
@@ -2580,14 +2588,37 @@
       const rows = articles.map(a => {
         const firstCell = `<td class="col-sticky-1">${photoOrPlaceholder(a.URL_PHOTO1, 'thumb', a.REF_JACTAL)}</td>`;
         const otherCells = cols.map((key, idx) => {
-          const stickyClass = idx === 0 ? 'col-sticky-2' : (idx === 1 ? 'col-sticky-3' : '');
+          const stickyClass = idx === 0 ? 'col-sticky-2' : '';
           return renderTableCell(a, key, stickyClass);
         });
         return `<tr class="clickable" data-ref="${escapeHtml(a.REF_JACTAL ?? '')}">${firstCell}${otherCells.join('')}</tr>`;
       }).join('');
 
       document.getElementById('content').innerHTML = `<div class="table-wrap"><table><thead><tr>${headerHtml}</tr></thead><tbody>${rows}</tbody></table></div>`;
-      document.querySelectorAll('tr.clickable').forEach(tr => tr.addEventListener('click', () => openDetail(tr.dataset.ref)));
+      // Ouverture du détail : on utilise mousedown/mouseup pour distinguer clic vs sélection de texte
+      document.querySelectorAll('tr.clickable').forEach(tr => {
+        let mouseDownPos = null;
+        tr.addEventListener('mousedown', (e) => {
+          // Ignorer si on clique sur un bouton ou un élément qui ne doit pas ouvrir le détail
+          if (e.target.closest('.img-download-btn') || e.target.closest('button')) return;
+          mouseDownPos = { x: e.clientX, y: e.clientY };
+        });
+        tr.addEventListener('mouseup', (e) => {
+          if (!mouseDownPos) return;
+          const dx = Math.abs(e.clientX - mouseDownPos.x);
+          const dy = Math.abs(e.clientY - mouseDownPos.y);
+          const pos = mouseDownPos;
+          mouseDownPos = null;
+          // Si la souris a bougé > 5px → sélection de texte, on n'ouvre pas
+          if (dx > 5 || dy > 5) return;
+          // Si on clique sur le bouton download → pas ouvrir
+          if (e.target.closest('.img-download-btn') || e.target.closest('button')) return;
+          // Si du texte est sélectionné → ne pas ouvrir
+          const sel = window.getSelection && window.getSelection().toString();
+          if (sel && sel.length > 0) return;
+          openDetail(tr.dataset.ref);
+        });
+      });
       document.querySelectorAll('th.sortable').forEach(th => {
         th.addEventListener('click', (e) => {
           // Ne pas trigger le sort si on clique sur la poignée resize
