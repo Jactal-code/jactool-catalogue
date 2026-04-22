@@ -177,20 +177,98 @@
     /* =============================================================
        TABLE (VUE LISTE)
        ============================================================= */
-    .table-wrap { overflow-x: auto; background: var(--bg-card); border-radius: 8px; box-shadow: var(--shadow-sm); }
-    table { width: 100%; background: var(--bg-card); border-collapse: collapse; }
-    thead { position: sticky; top: 0; z-index: 5; }
-    th { background: var(--accent); color: var(--text-inverse); padding: 12px; text-align: left; font-weight: 500; font-size: 13px; white-space: nowrap; }
+    .table-wrap {
+      overflow-x: auto;
+      overflow-y: visible;
+      background: var(--bg-card);
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      /* Container scrollable : max-height pour activer la sticky header */
+      max-height: calc(100vh - 240px);
+      min-height: 400px;
+    }
+    /* Scrollbar horizontale plus visible */
+    .table-wrap::-webkit-scrollbar { height: 12px; width: 10px; }
+    .table-wrap::-webkit-scrollbar-track { background: var(--bg-card-alt); border-radius: 6px; }
+    .table-wrap::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 6px; opacity: 0.6; }
+    .table-wrap::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+
+    table { width: 100%; background: var(--bg-card); border-collapse: separate; border-spacing: 0; }
+
+    /* En-tête sticky en haut */
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--accent);
+      color: var(--text-inverse);
+      padding: 12px;
+      text-align: left;
+      font-weight: 500;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    thead th::after {
+      /* Ligne fine en bas de la header pour bien le distinguer */
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 2px;
+      background: var(--accent-hover);
+    }
     th.sortable { cursor: pointer; user-select: none; }
     th.sortable:hover { background: var(--accent-hover); }
     th.sortable .sort-arrow { margin-left: 4px; opacity: 0.5; font-size: 11px; }
     th.sortable.active .sort-arrow { opacity: 1; font-weight: 700; }
-    td { padding: 8px 12px; border-bottom: 1px solid var(--border-softer); font-size: 14px; vertical-align: middle; background: var(--bg-card); color: var(--text-main); }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-softer);
+      font-size: 14px;
+      vertical-align: middle;
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
     td.num { font-family: monospace; text-align: right; }
     td.truncate { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     tr.clickable { cursor: pointer; }
     tr.clickable:hover td { background: var(--bg-hover); }
-    .thumb { width: 50px; height: 50px; object-fit: contain; border-radius: 4px; background: var(--bg-card-alt); }
+
+    /* Colonnes sticky (3 premières : Photo, REF, puis la 3ème visible) */
+    thead th.col-sticky-1,
+    thead th.col-sticky-2,
+    thead th.col-sticky-3,
+    tbody td.col-sticky-1,
+    tbody td.col-sticky-2,
+    tbody td.col-sticky-3 {
+      position: sticky;
+    }
+    thead th.col-sticky-1,
+    tbody td.col-sticky-1 { left: 0; width: 74px; min-width: 74px; max-width: 74px; }
+    thead th.col-sticky-2,
+    tbody td.col-sticky-2 { left: 74px; min-width: 150px; }
+    thead th.col-sticky-3,
+    tbody td.col-sticky-3 { left: 224px; min-width: 180px; }
+
+    thead th.col-sticky-1 { z-index: 11; }
+    thead th.col-sticky-2 { z-index: 11; }
+    thead th.col-sticky-3 { z-index: 11; }
+    tbody td.col-sticky-1 { z-index: 3; background: var(--bg-card); }
+    tbody td.col-sticky-2 { z-index: 3; background: var(--bg-card); }
+    tbody td.col-sticky-3 { z-index: 3; background: var(--bg-card); }
+
+    /* Fond correct au survol de ligne */
+    tr.clickable:hover td.col-sticky-1,
+    tr.clickable:hover td.col-sticky-2,
+    tr.clickable:hover td.col-sticky-3 { background: var(--bg-hover); }
+
+    /* Ombre à droite de la dernière col sticky pour bien indiquer qu'elle est fixe */
+    thead th.col-sticky-3,
+    tbody td.col-sticky-3 { box-shadow: 4px 0 6px -2px rgba(0,0,0,0.15); }
+    [data-theme="dark"] thead th.col-sticky-3,
+    [data-theme="dark"] tbody td.col-sticky-3 { box-shadow: 4px 0 6px -2px rgba(0,0,0,0.4); }
+
+    .thumb { width: 50px; height: 50px; object-fit: contain; border-radius: 4px; background: var(--bg-card-alt); display: block; }
     .thumb-placeholder { width: 50px; height: 50px; border-radius: 4px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; color: var(--accent); }
 
     /* =============================================================
@@ -355,6 +433,163 @@
     .btn-validate:disabled { background: var(--text-fade); cursor: not-allowed; }
 
     /* =============================================================
+       BOUTON DOWNLOAD IMAGE (overlay au survol)
+       ============================================================= */
+    .img-wrap {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+    }
+    .img-download-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.65);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s, transform 0.15s;
+      z-index: 2;
+      line-height: 0;
+      padding: 0;
+    }
+    .img-wrap:hover .img-download-btn {
+      opacity: 1;
+    }
+    .img-download-btn:hover {
+      background: var(--accent);
+      transform: scale(1.1);
+    }
+    /* Taille plus grande pour les vignettes */
+    .card-photo-wrap .img-download-btn { top: 6px; right: 6px; width: 30px; height: 30px; font-size: 14px; }
+    /* Plus grand dans le détail */
+    .detail-photo-wrap .img-download-btn { top: 8px; right: 8px; width: 32px; height: 32px; font-size: 15px; }
+    .detail-photo-wrap { position: relative; display: inline-block; }
+    /* Dans les photos multiples du détail */
+    .photo-thumb { position: relative; }
+    .photo-thumb .img-download-btn { width: 22px; height: 22px; font-size: 11px; top: 3px; right: 3px; }
+
+    /* =============================================================
+       RESIZE COLONNES
+       ============================================================= */
+    th.resizable { position: relative; }
+    .col-resize-handle {
+      position: absolute;
+      top: 0;
+      right: -3px;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      z-index: 12;
+      background: transparent;
+      transition: background 0.15s;
+    }
+    .col-resize-handle:hover,
+    .col-resize-handle.resizing {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    body.col-resizing {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+    body.col-resizing * {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+
+    /* =============================================================
+       BARRE FLOTTANTE (pagination + haut de page)
+       ============================================================= */
+    .floating-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 30px;
+      box-shadow: var(--shadow-md);
+      padding: 8px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .floating-bar.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+    .fb-btn {
+      background: var(--accent);
+      color: var(--text-inverse);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .fb-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .fb-btn:disabled { background: var(--text-fade); cursor: not-allowed; opacity: 0.6; }
+    .fb-pagination {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-left: 10px;
+      border-left: 1px solid var(--border-soft);
+    }
+    .fb-page-info {
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 500;
+      min-width: 90px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* =============================================================
+       POPUP IMAGES
+       ============================================================= */
+    .img-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .img-section { margin-bottom: 20px; }
+    .img-section-title { font-size: 13px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .img-radio-card { display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-card-alt); border: 1px solid var(--border-soft); border-radius: 6px; cursor: pointer; margin-bottom: 8px; color: var(--text-main); }
+    .img-radio-card:hover { background: var(--bg-hover); }
+    .img-radio-card input { margin-top: 3px; }
+    .img-radio-label { font-weight: 500; color: var(--text-main); }
+    .img-radio-sub { font-size: 12px; color: var(--text-dim); }
+    .img-radio-sub code { background: var(--bg-body); padding: 1px 4px; border-radius: 3px; font-size: 11px; color: var(--accent); }
+    .img-textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical; background: var(--bg-input); color: var(--text-main); }
+    .img-list-stats { font-size: 12px; color: var(--accent); margin-top: 6px; }
+    .img-radio-inline { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text-main); border-radius: 4px; }
+    .img-radio-inline:hover { background: var(--bg-hover); }
+    .img-radio-inline code { background: var(--bg-body); padding: 1px 4px; border-radius: 3px; font-size: 11px; color: var(--accent); }
+    .img-progress { padding: 14px; background: var(--accent-soft); border-radius: 6px; margin-top: 12px; }
+    .img-progress-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; color: var(--accent); margin-bottom: 8px; }
+    .img-progress-bar-bg { background: var(--bg-card); height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-soft); }
+    .img-progress-bar-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.3s; }
+    .img-report-summary { margin-bottom: 14px; font-size: 14px; color: var(--text-main); }
+    .img-report-list { max-height: 240px; overflow-y: auto; background: var(--bg-card-alt); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-soft); font-family: monospace; font-size: 12px; margin-bottom: 14px; color: var(--text-main); }
+
+    /* =============================================================
        RESPONSIVE
        ============================================================= */
     @media (max-width: 800px) {
@@ -405,6 +640,16 @@
   <div id="content"><div class="loading">Chargement…</div></div>
 
   <div class="footer">By Velkora Consulting</div>
+
+  <!-- Barre flottante (apparaît après scroll) -->
+  <div class="floating-bar" id="floatingBar">
+    <button class="fb-btn" id="fbTopBtn" title="Remonter en haut">⬆</button>
+    <div class="fb-pagination">
+      <button class="fb-btn" id="fbPrevBtn" title="Page précédente">←</button>
+      <span class="fb-page-info" id="fbPageInfo">Page 1/1</span>
+      <button class="fb-btn" id="fbNextBtn" title="Page suivante">→</button>
+    </div>
+  </div>
 
   <div class="detail-overlay" id="detailOverlay"></div>
   <div class="detail-panel" id="detailPanel">
@@ -517,51 +762,51 @@
         <h2 class="modal-title">📸 Export des images</h2>
         <button class="modal-close" id="imgCloseBtn">✕</button>
       </div>
-      <div style="padding: 20px; overflow-y: auto; flex: 1;">
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 13px; font-weight: 600; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">1. Source des articles</div>
-          <label style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #f9f9fb; border-radius: 6px; cursor: pointer; margin-bottom: 8px;">
-            <input type="radio" name="imgSource" value="filters" checked style="margin-top: 3px;">
+      <div class="img-body">
+        <div class="img-section">
+          <div class="img-section-title">1. Source des articles</div>
+          <label class="img-radio-card">
+            <input type="radio" name="imgSource" value="filters" checked>
             <div>
-              <div style="font-weight: 500;">Utiliser les articles actuellement filtrés</div>
-              <div style="font-size: 12px; color: #666;" id="imgFiltersCount">—</div>
+              <div class="img-radio-label">Utiliser les articles actuellement filtrés</div>
+              <div class="img-radio-sub" id="imgFiltersCount">—</div>
             </div>
           </label>
-          <label style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #f9f9fb; border-radius: 6px; cursor: pointer;">
-            <input type="radio" name="imgSource" value="list" style="margin-top: 3px;">
+          <label class="img-radio-card">
+            <input type="radio" name="imgSource" value="list">
             <div style="flex: 1;">
-              <div style="font-weight: 500;">Coller une liste d'identifiants</div>
-              <div style="font-size: 12px; color: #666; margin-bottom: 8px;">Réfs Jactal (contiennent un <code>-</code>), EAN usine (13 chiffres), ou noms de fichiers (ex: <code>00036430.jpg</code>). Séparateurs : virgule, point-virgule, tabulation, retour ligne.</div>
-              <textarea id="imgListInput" rows="6" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical;" placeholder="Ex:&#10;ABC-123&#10;3256789012345&#10;00036430.jpg"></textarea>
-              <div style="font-size: 12px; color: #1e3a5f; margin-top: 6px;" id="imgListStats">—</div>
+              <div class="img-radio-label">Coller une liste d'identifiants</div>
+              <div class="img-radio-sub" style="margin-bottom: 8px;">Réfs Jactal (contiennent un <code>-</code>), EAN usine (13 chiffres), ou noms de fichiers (ex: <code>00036430.jpg</code>). Séparateurs : virgule, point-virgule, tabulation, retour ligne.</div>
+              <textarea id="imgListInput" class="img-textarea" rows="6" placeholder="Ex:&#10;ABC-123&#10;3256789012345&#10;00036430.jpg"></textarea>
+              <div class="img-list-stats" id="imgListStats">—</div>
             </div>
           </label>
         </div>
 
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 13px; font-weight: 600; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">2. Renommage des images</div>
-          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px;">
+        <div class="img-section">
+          <div class="img-section-title">2. Renommage des images</div>
+          <label class="img-radio-inline">
             <input type="radio" name="imgRename" value="ref" checked>
             <span>Réf. Jactal (ex: <code>ABC-123.jpg</code>)</span>
           </label>
-          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px;">
+          <label class="img-radio-inline">
             <input type="radio" name="imgRename" value="ean">
             <span>EAN usine (ex: <code>3256789012345.jpg</code>)</span>
           </label>
-          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px;">
+          <label class="img-radio-inline">
             <input type="radio" name="imgRename" value="origin">
             <span>Nom d'origine (ex: <code>00036430.jpg</code>)</span>
           </label>
         </div>
 
         <!-- Progress pendant l'export -->
-        <div id="imgProgress" style="display: none; padding: 14px; background: #eef2f7; border-radius: 6px; margin-top: 12px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; color: #1e3a5f; margin-bottom: 8px;">
+        <div id="imgProgress" class="img-progress" style="display: none;">
+          <div class="img-progress-header">
             <span id="imgProgressLabel">Préparation…</span>
             <span id="imgProgressCount">0 / 0</span>
           </div>
-          <div style="background: white; height: 8px; border-radius: 4px; overflow: hidden;">
-            <div id="imgProgressBar" style="background: #2e7d32; height: 100%; width: 0%; transition: width 0.3s;"></div>
+          <div class="img-progress-bar-bg">
+            <div id="imgProgressBar" class="img-progress-bar-fill"></div>
           </div>
         </div>
       </div>
@@ -579,8 +824,8 @@
   <div class="mini-modal-overlay" id="imgReportModal">
     <div class="mini-modal" style="width: 580px;">
       <h3 id="imgReportTitle">Export terminé</h3>
-      <div id="imgReportSummary" style="margin-bottom: 14px; font-size: 14px;"></div>
-      <div id="imgReportList" style="display: none; max-height: 240px; overflow-y: auto; background: #f9f9fb; padding: 10px 12px; border-radius: 6px; border: 1px solid #e0e0e4; font-family: monospace; font-size: 12px; margin-bottom: 14px;"></div>
+      <div id="imgReportSummary" class="img-report-summary"></div>
+      <div id="imgReportList" class="img-report-list" style="display: none;"></div>
       <div class="mini-modal-actions">
         <button class="btn-secondary" id="imgReportDownloadBtn" style="display:none;">📄 Télécharger rapport</button>
         <button class="btn-primary" id="imgReportCloseBtn">OK</button>
@@ -647,6 +892,8 @@
     let currentOrder = 'desc';
     let prefsLoaded = false;
     let currentTheme = 'light';
+    // Initialisation sûre avant le chargement des prefs
+    window.__userPrefs = { column_widths: {}, export_templates: [] };
 
     const filters = {
       fournisseurs: new Set(), marques: new Set(), licences: new Set(),
@@ -836,6 +1083,112 @@
     })();
 
     // =============================================================
+    // DOWNLOAD IMAGE (bouton overlay)
+    // =============================================================
+    async function downloadImage(imgUrl, refJactal) {
+      if (!imgUrl) return;
+      try {
+        const resp = await fetch(imgUrl, { mode: 'cors' });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const blob = await resp.blob();
+        // Détection de l'extension depuis l'URL ou le content-type
+        let ext = '.jpg';
+        const urlMatch = imgUrl.match(/\.(jpe?g|png|gif|webp|bmp)(?:\?|$)/i);
+        if (urlMatch) ext = '.' + urlMatch[1].toLowerCase().replace('jpeg', 'jpg');
+        else if (blob.type.includes('png')) ext = '.png';
+        else if (blob.type.includes('gif')) ext = '.gif';
+        else if (blob.type.includes('webp')) ext = '.webp';
+        // Nom = REF_JACTAL nettoyé
+        const safeName = (refJactal || 'image').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
+        const filename = `${safeName}${ext}`;
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } catch (err) {
+        console.error('Erreur téléchargement image:', err);
+        alert(`Impossible de télécharger l'image : ${err.message}`);
+      }
+    }
+
+    // Event delegation pour les boutons download (cliquables partout où il y en a)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.img-download-btn');
+      if (!btn) return;
+      e.stopPropagation(); // empêcher l'ouverture du détail quand on clique dans la liste/vignette
+      e.preventDefault();
+      const url = btn.dataset.url;
+      const ref = btn.dataset.ref;
+      downloadImage(url, ref);
+    });
+
+    // =============================================================
+    // RESIZE COLONNES (drag sur le bord droit du <th>)
+    // =============================================================
+    let resizeState = null;
+
+    function attachResizeHandles() {
+      // On attache sur les th non-sticky (sticky a des largeurs fixes)
+      const ths = document.querySelectorAll('table thead th:not(.col-sticky-1):not(.col-sticky-2):not(.col-sticky-3)');
+      ths.forEach(th => {
+        if (th.querySelector('.col-resize-handle')) return; // déjà ajouté
+        th.classList.add('resizable');
+        // Appliquer la largeur sauvegardée si dispo
+        const colKey = th.dataset.sort || th.textContent.trim();
+        if (window.__userPrefs && window.__userPrefs.column_widths && window.__userPrefs.column_widths[colKey]) {
+          th.style.width = window.__userPrefs.column_widths[colKey] + 'px';
+        }
+        const handle = document.createElement('div');
+        handle.className = 'col-resize-handle';
+        handle.addEventListener('mousedown', (e) => startColResize(e, th, colKey));
+        th.appendChild(handle);
+      });
+    }
+
+    function startColResize(e, th, colKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      resizeState = {
+        th,
+        colKey,
+        startX: e.pageX,
+        startWidth: th.offsetWidth
+      };
+      document.body.classList.add('col-resizing');
+      e.target.classList.add('resizing');
+      document.addEventListener('mousemove', onColResizeMove);
+      document.addEventListener('mouseup', onColResizeEnd);
+    }
+
+    function onColResizeMove(e) {
+      if (!resizeState) return;
+      const newWidth = Math.max(60, resizeState.startWidth + (e.pageX - resizeState.startX));
+      resizeState.th.style.width = newWidth + 'px';
+      resizeState.th.style.minWidth = newWidth + 'px';
+    }
+
+    function onColResizeEnd() {
+      if (!resizeState) return;
+      const finalWidth = resizeState.th.offsetWidth;
+      const colKey = resizeState.colKey;
+      // Sauvegarder dans les prefs
+      if (!window.__userPrefs.column_widths) window.__userPrefs.column_widths = {};
+      window.__userPrefs.column_widths[colKey] = finalWidth;
+      schedulePrefsSave();
+      // Nettoyer
+      document.body.classList.remove('col-resizing');
+      document.querySelectorAll('.col-resize-handle.resizing').forEach(h => h.classList.remove('resizing'));
+      document.removeEventListener('mousemove', onColResizeMove);
+      document.removeEventListener('mouseup', onColResizeEnd);
+      resizeState = null;
+    }
+
+
+    // =============================================================
     // PRÉFÉRENCES UTILISATEUR
     // =============================================================
     let savePrefsTimeout = null;
@@ -877,7 +1230,12 @@
       if (prefs.theme === 'dark' || prefs.theme === 'light') {
         applyTheme(prefs.theme);
       }
+      // Largeurs de colonnes
+      if (prefs.column_widths && typeof prefs.column_widths === 'object') {
+        window.__columnWidthsPending = prefs.column_widths;
+      }
       window.__userPrefs = prefs;
+      if (!window.__userPrefs.column_widths) window.__userPrefs.column_widths = {};
       loadExportTemplates();
     }
 
@@ -896,6 +1254,7 @@
           page_size: currentPageSize,
           visible_columns: visibleColumns,
           theme: currentTheme,
+          column_widths: (window.__userPrefs && window.__userPrefs.column_widths) || {},
           export_templates: (window.__userPrefs && window.__userPrefs.export_templates) || []
         };
         const resp = await fetch('/api/preferences', {
@@ -1871,8 +2230,13 @@
       let content;
       if (section.photos) {
         const urls = [a.URL_PHOTO1, a.URL_PHOTO2, a.URL_PHOTO3, a.URL_PHOTO4, a.URL_PHOTO5];
+        const ref = a.REF_JACTAL || 'image';
         const thumbs = urls.map((url, i) => {
-          if (url && url.trim()) return `<div class="photo-thumb" title="Photo ${i+1}"><img src="${escapeHtml(url)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;photo-thumb-empty&quot;>Indispo</span>'"></div>`;
+          if (url && url.trim()) {
+            const safeUrl = escapeHtml(url);
+            const refWithIdx = urls.filter((u, j) => j <= i && u && u.trim()).length > 1 ? `${ref}_${i+1}` : ref;
+            return `<div class="photo-thumb" title="Photo ${i+1}"><img src="${safeUrl}" loading="lazy" onerror="this.outerHTML='<span class=&quot;photo-thumb-empty&quot;>Indispo</span>'"><button class="img-download-btn" data-url="${safeUrl}" data-ref="${escapeHtml(refWithIdx)}" title="Télécharger">⬇</button></div>`;
+          }
           return `<div class="photo-thumb"><span class="photo-thumb-empty">Photo ${i+1}</span></div>`;
         }).join('');
         content = `<div class="photos-grid">${thumbs}</div>`;
@@ -1940,7 +2304,7 @@
 
     function renderDetail(a) {
       const photo = (a.URL_PHOTO1 && a.URL_PHOTO1.trim())
-        ? `<img src="${escapeHtml(a.URL_PHOTO1)}" class="detail-photo" loading="lazy" onerror="this.outerHTML='<div class=&quot;detail-photo-placeholder&quot;><svg width=&quot;50%&quot; height=&quot;50%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`
+        ? `<div class="detail-photo-wrap"><img src="${escapeHtml(a.URL_PHOTO1)}" class="detail-photo" loading="lazy" onerror="this.outerHTML='<div class=&quot;detail-photo-placeholder&quot;><svg width=&quot;50%&quot; height=&quot;50%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'"><button class="img-download-btn" data-url="${escapeHtml(a.URL_PHOTO1)}" data-ref="${escapeHtml(a.REF_JACTAL || 'image')}" title="Télécharger">⬇</button></div>`
         : `<div class="detail-photo-placeholder"><svg width="50%" height="50%"><use href="#icon-box"/></svg></div>`;
       const statutLbl = a.STATUT ? (STATUT_LABELS[a.STATUT] || a.STATUT) : '—';
       const tabsHtml = DETAIL_TABS.map((t, i) => `<button class="detail-tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`).join('');
@@ -2124,6 +2488,7 @@
         document.getElementById('prevBtn').disabled = data.page <= 1;
         document.getElementById('nextBtn').disabled = data.page >= data.totalPages;
         info.style.display = 'flex';
+        if (typeof updateFloatingBar === 'function') updateFloatingBar();
 
         if (data.articles.length === 0) { content.innerHTML = '<div class="empty">Aucun article trouvé.</div>'; return; }
         if (currentView === 'list') renderList(data.articles);
@@ -2142,12 +2507,15 @@
       return `<span class="pert ${cls}">${n}</span>`;
     }
 
-    function photoOrPlaceholder(url, size) {
+    function photoOrPlaceholder(url, size, ref) {
       if (url && url.trim()) {
+        const safeUrl = escapeHtml(url);
+        const safeRef = escapeHtml(ref || 'image');
+        const dlBtn = `<button class="img-download-btn" data-url="${safeUrl}" data-ref="${safeRef}" title="Télécharger">⬇</button>`;
         if (size === 'card-photo') {
-          return `<div class="card-photo-wrap"><img src="${escapeHtml(url)}" class="card-photo" loading="lazy" onerror="this.outerHTML='<div class=&quot;card-photo-placeholder&quot;><svg width=&quot;40%&quot; height=&quot;40%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'"></div>`;
+          return `<div class="card-photo-wrap"><img src="${safeUrl}" class="card-photo" loading="lazy" onerror="this.outerHTML='<div class=&quot;card-photo-placeholder&quot;><svg width=&quot;40%&quot; height=&quot;40%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">${dlBtn}</div>`;
         }
-        return `<img src="${escapeHtml(url)}" class="${size}" loading="lazy" onerror="this.outerHTML='<div class=&quot;${size}-placeholder&quot;><svg width=&quot;60%&quot; height=&quot;60%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`;
+        return `<div class="img-wrap"><img src="${safeUrl}" class="${size}" loading="lazy" onerror="this.outerHTML='<div class=&quot;${size}-placeholder&quot;><svg width=&quot;60%&quot; height=&quot;60%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">${dlBtn}</div>`;
       }
       if (size === 'card-photo') return `<div class="card-photo-wrap"><div class="card-photo-placeholder"><svg width="40%" height="40%"><use href="#icon-box"/></svg></div></div>`;
       return `<div class="${size}-placeholder"><svg width="60%" height="60%"><use href="#icon-box"/></svg></div>`;
@@ -2166,55 +2534,64 @@
       'PERTINANCE': 'pertinance'
     };
 
-    function renderTableCell(article, key) {
+    function renderTableCell(article, key, extraClass = '') {
       const info = COLUMN_INFO[key];
-      if (!info) return `<td>${escapeHtml(article[key] ?? '')}</td>`;
+      const ec = extraClass ? ` ${extraClass}` : '';
+      if (!info) return `<td class="${extraClass}">${escapeHtml(article[key] ?? '')}</td>`;
       const type = info.type;
       const val = article[key];
 
-      if (key === 'URL_PHOTO1') return `<td>${photoOrPlaceholder(val, 'thumb')}</td>`;
-      if (type === 'pertinance') return `<td>${pertBadge(val)}</td>`;
+      if (key === 'URL_PHOTO1') return `<td class="${extraClass}">${photoOrPlaceholder(val, 'thumb', article.REF_JACTAL)}</td>`;
+      if (type === 'pertinance') return `<td class="${extraClass}">${pertBadge(val)}</td>`;
       if (type === 'bool') {
         const truthy = (val === 1 || val === '1' || val === true || val === 'OUI' || val === 'oui' || val === 'O');
-        if (val === null || val === undefined || val === '') return `<td><span class="no-badge">Non</span></td>`;
-        return `<td>${truthy ? '<span class="yes-badge">Oui</span>' : '<span class="no-badge">Non</span>'}</td>`;
+        if (val === null || val === undefined || val === '') return `<td class="${extraClass}"><span class="no-badge">Non</span></td>`;
+        return `<td class="${extraClass}">${truthy ? '<span class="yes-badge">Oui</span>' : '<span class="no-badge">Non</span>'}</td>`;
       }
       if (type === 'euro') {
         const f = formatEuro(val);
-        return `<td class="num">${f === null ? '—' : escapeHtml(f)}</td>`;
+        return `<td class="num${ec}">${f === null ? '—' : escapeHtml(f)}</td>`;
       }
       if (type === 'num') {
-        if (val === null || val === undefined || val === '') return `<td class="num">—</td>`;
-        return `<td class="num">${escapeHtml(val)}</td>`;
+        if (val === null || val === undefined || val === '') return `<td class="num${ec}">—</td>`;
+        return `<td class="num${ec}">${escapeHtml(val)}</td>`;
       }
-      if (type === 'statut') return `<td>${escapeHtml(STATUT_LABELS[val] || val || '—')}</td>`;
-      if (val === null || val === undefined || val === '') return `<td>—</td>`;
-      return `<td class="truncate" title="${escapeHtml(val)}">${escapeHtml(val)}</td>`;
+      if (type === 'statut') return `<td class="${extraClass}">${escapeHtml(STATUT_LABELS[val] || val || '—')}</td>`;
+      if (val === null || val === undefined || val === '') return `<td class="${extraClass}">—</td>`;
+      return `<td class="truncate${ec}" title="${escapeHtml(val)}">${escapeHtml(val)}</td>`;
     }
 
     function renderList(articles) {
       const cols = [...visibleColumns];
-      const headerHtml = ['<th>Photo</th>'].concat(cols.map(key => {
+      // 3 premières colonnes sticky : Photo + 2 premières de visibleColumns (généralement REF + LIBELLE ou autres)
+      const headerHtml = [`<th class="col-sticky-1">Photo</th>`].concat(cols.map((key, idx) => {
         const info = COLUMN_INFO[key];
         const label = info ? info.label : key;
         const sortKey = SORTABLE_MAP[key];
+        // Les 2 premières colonnes de visibleColumns deviennent col-sticky-2 et col-sticky-3
+        const stickyClass = idx === 0 ? ' col-sticky-2' : (idx === 1 ? ' col-sticky-3' : '');
         if (sortKey) {
           const active = currentSort === sortKey ? 'active' : '';
-          return `<th class="sortable ${active}" data-sort="${sortKey}">${escapeHtml(label)}<span class="sort-arrow">${sortArrow(sortKey)}</span></th>`;
+          return `<th class="sortable ${active}${stickyClass}" data-sort="${sortKey}">${escapeHtml(label)}<span class="sort-arrow">${sortArrow(sortKey)}</span></th>`;
         }
-        return `<th>${escapeHtml(label)}</th>`;
+        return `<th class="${stickyClass.trim()}">${escapeHtml(label)}</th>`;
       })).join('');
 
       const rows = articles.map(a => {
-        const cells = ['<td>' + photoOrPlaceholder(a.URL_PHOTO1, 'thumb') + '</td>']
-          .concat(cols.map(key => renderTableCell(a, key)));
-        return `<tr class="clickable" data-ref="${escapeHtml(a.REF_JACTAL ?? '')}">${cells.join('')}</tr>`;
+        const firstCell = `<td class="col-sticky-1">${photoOrPlaceholder(a.URL_PHOTO1, 'thumb', a.REF_JACTAL)}</td>`;
+        const otherCells = cols.map((key, idx) => {
+          const stickyClass = idx === 0 ? 'col-sticky-2' : (idx === 1 ? 'col-sticky-3' : '');
+          return renderTableCell(a, key, stickyClass);
+        });
+        return `<tr class="clickable" data-ref="${escapeHtml(a.REF_JACTAL ?? '')}">${firstCell}${otherCells.join('')}</tr>`;
       }).join('');
 
       document.getElementById('content').innerHTML = `<div class="table-wrap"><table><thead><tr>${headerHtml}</tr></thead><tbody>${rows}</tbody></table></div>`;
       document.querySelectorAll('tr.clickable').forEach(tr => tr.addEventListener('click', () => openDetail(tr.dataset.ref)));
       document.querySelectorAll('th.sortable').forEach(th => {
-        th.addEventListener('click', () => {
+        th.addEventListener('click', (e) => {
+          // Ne pas trigger le sort si on clique sur la poignée resize
+          if (e.target.classList.contains('col-resize-handle')) return;
           const col = th.dataset.sort;
           if (currentSort === col) currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
           else {
@@ -2224,6 +2601,7 @@
           currentPage = 1; loadArticles(); schedulePrefsSave();
         });
       });
+      attachResizeHandles();
     }
 
     function renderGrid(articles) {
@@ -2240,7 +2618,7 @@
           return `<div class="card-row"><span class="card-lbl">${escapeHtml(info.label)}</span><span class="card-val" title="${escapeHtml(display)}">${escapeHtml(display)}</span></div>`;
         }).join('');
         return `<div class="card" data-ref="${escapeHtml(a.REF_JACTAL ?? '')}">
-          ${photoOrPlaceholder(a.URL_PHOTO1, 'card-photo')}
+          ${photoOrPlaceholder(a.URL_PHOTO1, 'card-photo', a.REF_JACTAL)}
           <div class="card-body">
             <div class="card-ref">${escapeHtml(a.REF_JACTAL ?? '')}</div>
             ${rows}
@@ -2289,6 +2667,45 @@
       currentPage = 1; loadArticles(); schedulePrefsSave();
     });
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+    // =============================================================
+    // BARRE FLOTTANTE (pagination + haut de page)
+    // =============================================================
+    const floatingBar = document.getElementById('floatingBar');
+    let floatingBarTicking = false;
+
+    function updateFloatingBar() {
+      // Afficher la barre si on a scrollé > 300px
+      if (window.scrollY > 300) {
+        floatingBar.classList.add('visible');
+      } else {
+        floatingBar.classList.remove('visible');
+      }
+      // Mettre à jour le texte et l'état des boutons
+      document.getElementById('fbPageInfo').textContent = `Page ${currentPage}/${totalPages || 1}`;
+      document.getElementById('fbPrevBtn').disabled = currentPage <= 1;
+      document.getElementById('fbNextBtn').disabled = currentPage >= totalPages;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!floatingBarTicking) {
+        window.requestAnimationFrame(() => {
+          updateFloatingBar();
+          floatingBarTicking = false;
+        });
+        floatingBarTicking = true;
+      }
+    });
+
+    document.getElementById('fbTopBtn').addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('fbPrevBtn').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; loadArticles(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    });
+    document.getElementById('fbNextBtn').addEventListener('click', () => {
+      if (currentPage < totalPages) { currentPage++; loadArticles(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    });
 
     document.addEventListener('click', () => {
       document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
