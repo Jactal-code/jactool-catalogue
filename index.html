@@ -1701,7 +1701,7 @@
       if (section.photos) {
         const urls = [a.URL_PHOTO1, a.URL_PHOTO2, a.URL_PHOTO3, a.URL_PHOTO4, a.URL_PHOTO5];
         const thumbs = urls.map((url, i) => {
-          if (url && url.trim()) return `<div class="photo-thumb" title="Photo ${i+1}"><img src="${escapeHtml(url)}" onerror="this.outerHTML='<span class=&quot;photo-thumb-empty&quot;>Indispo</span>'"></div>`;
+          if (url && url.trim()) return `<div class="photo-thumb" title="Photo ${i+1}"><img src="${escapeHtml(url)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;photo-thumb-empty&quot;>Indispo</span>'"></div>`;
           return `<div class="photo-thumb"><span class="photo-thumb-empty">Photo ${i+1}</span></div>`;
         }).join('');
         content = `<div class="photos-grid">${thumbs}</div>`;
@@ -1769,7 +1769,7 @@
 
     function renderDetail(a) {
       const photo = (a.URL_PHOTO1 && a.URL_PHOTO1.trim())
-        ? `<img src="${escapeHtml(a.URL_PHOTO1)}" class="detail-photo" onerror="this.outerHTML='<div class=&quot;detail-photo-placeholder&quot;><svg width=&quot;50%&quot; height=&quot;50%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`
+        ? `<img src="${escapeHtml(a.URL_PHOTO1)}" class="detail-photo" loading="lazy" onerror="this.outerHTML='<div class=&quot;detail-photo-placeholder&quot;><svg width=&quot;50%&quot; height=&quot;50%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`
         : `<div class="detail-photo-placeholder"><svg width="50%" height="50%"><use href="#icon-box"/></svg></div>`;
       const statutLbl = a.STATUT ? (STATUT_LABELS[a.STATUT] || a.STATUT) : '—';
       const tabsHtml = DETAIL_TABS.map((t, i) => `<button class="detail-tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`).join('');
@@ -1974,9 +1974,9 @@
     function photoOrPlaceholder(url, size) {
       if (url && url.trim()) {
         if (size === 'card-photo') {
-          return `<div class="card-photo-wrap"><img src="${escapeHtml(url)}" class="card-photo" onerror="this.outerHTML='<div class=&quot;card-photo-placeholder&quot;><svg width=&quot;40%&quot; height=&quot;40%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'"></div>`;
+          return `<div class="card-photo-wrap"><img src="${escapeHtml(url)}" class="card-photo" loading="lazy" onerror="this.outerHTML='<div class=&quot;card-photo-placeholder&quot;><svg width=&quot;40%&quot; height=&quot;40%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'"></div>`;
         }
-        return `<img src="${escapeHtml(url)}" class="${size}" onerror="this.outerHTML='<div class=&quot;${size}-placeholder&quot;><svg width=&quot;60%&quot; height=&quot;60%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`;
+        return `<img src="${escapeHtml(url)}" class="${size}" loading="lazy" onerror="this.outerHTML='<div class=&quot;${size}-placeholder&quot;><svg width=&quot;60%&quot; height=&quot;60%&quot;><use href=&quot;#icon-box&quot;/></svg></div>'">`;
       }
       if (size === 'card-photo') return `<div class="card-photo-wrap"><div class="card-photo-placeholder"><svg width="40%" height="40%"><use href="#icon-box"/></svg></div></div>`;
       return `<div class="${size}-placeholder"><svg width="60%" height="60%"><use href="#icon-box"/></svg></div>`;
