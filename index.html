@@ -187,6 +187,37 @@
     .sel-card.locked { border-left-color: #999; background: #fafbfc; cursor: default; }
     .sel-card.locked .lock { color: #999; font-size: 14px; flex-shrink: 0; }
 
+    /* BARRE DE MODÈLES */
+    .templates-bar { padding: 10px 16px; background: #eef2f7; border-bottom: 1px solid #d9e2ec; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex-shrink: 0; }
+    .templates-bar-label { font-size: 12px; font-weight: 600; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
+    .template-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: white; border: 1px solid #1e3a5f; color: #1e3a5f; border-radius: 16px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    .template-chip:hover { background: #1e3a5f; color: white; }
+    .template-chip.active { background: #1e3a5f; color: white; }
+    .template-chip .chip-remove { background: none; border: none; color: inherit; cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px; opacity: 0.7; }
+    .template-chip .chip-remove:hover { opacity: 1; }
+    .template-save-btn { margin-left: auto; padding: 5px 12px; background: #2e7d32; color: white; border: none; border-radius: 16px; font-size: 12px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+    .template-save-btn:hover { background: #388e3c; }
+    .template-save-btn:disabled { background: #999; cursor: not-allowed; }
+    .templates-empty { color: #777; font-style: italic; font-size: 12px; }
+
+    /* POPUP mini (nommage modèle, confirmations) */
+    .mini-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .mini-modal-overlay.open { display: flex; }
+    .mini-modal { background: white; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 420px; max-width: 100%; padding: 24px; }
+    .mini-modal h3 { margin: 0 0 12px 0; font-size: 16px; color: #1e3a5f; }
+    .mini-modal p { margin: 0 0 16px 0; font-size: 14px; color: #555; line-height: 1.5; }
+    .mini-modal input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; margin-bottom: 4px; }
+    .mini-modal input:focus { outline: none; border-color: #1e3a5f; box-shadow: 0 0 0 2px rgba(30,58,95,0.15); }
+    .mini-modal-error { color: #d33; font-size: 12px; min-height: 18px; margin-bottom: 12px; }
+    .mini-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .mini-modal-actions button { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; border: none; font-weight: 500; }
+    .mini-modal-actions .btn-primary { background: #1e3a5f; color: white; }
+    .mini-modal-actions .btn-primary:hover { background: #2a4d7e; }
+    .mini-modal-actions .btn-danger { background: #d33; color: white; }
+    .mini-modal-actions .btn-danger:hover { background: #e54; }
+    .mini-modal-actions .btn-secondary { background: white; color: #555; border: 1px solid #ccc; }
+    .mini-modal-actions .btn-secondary:hover { background: #eef2f7; }
+
     .modal-footer { padding: 14px 20px; border-top: 1px solid #e5e5e9; display: flex; justify-content: space-between; align-items: center; background: #f9f9fb; border-radius: 0 0 10px 10px; flex-shrink: 0; }
     .modal-footer-info { font-size: 13px; color: #555; flex: 1; }
     .modal-footer-info.warning { color: #d33; font-weight: 600; }
@@ -256,6 +287,11 @@
       <div class="modal-header">
         <h2 class="modal-title">📥 Exporter vers Excel — choisissez et ordonnez les colonnes</h2>
         <button class="modal-close" id="exportCloseBtn">✕</button>
+      </div>
+      <div class="templates-bar" id="templatesBar">
+        <span class="templates-bar-label">📋 Modèles :</span>
+        <div id="templatesChips" style="display:contents;"></div>
+        <button class="template-save-btn" id="templateSaveBtn">💾 Enregistrer</button>
       </div>
       <div class="export-body">
         <div class="export-col">
@@ -344,12 +380,51 @@
     </div>
   </div>
 
+  <!-- Mini-popup : Enregistrer un modèle -->
+  <div class="mini-modal-overlay" id="tplSaveModal">
+    <div class="mini-modal">
+      <h3>💾 Enregistrer comme modèle</h3>
+      <p>Donnez un nom à ce modèle pour le retrouver facilement.</p>
+      <input type="text" id="tplSaveInput" placeholder="Ex: Export fournisseur" maxlength="50" autocomplete="off">
+      <div class="mini-modal-error" id="tplSaveError"></div>
+      <div class="mini-modal-actions">
+        <button class="btn-secondary" id="tplSaveCancelBtn">Annuler</button>
+        <button class="btn-primary" id="tplSaveConfirmBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini-popup : Confirmation écrasement -->
+  <div class="mini-modal-overlay" id="tplOverwriteModal">
+    <div class="mini-modal">
+      <h3>⚠️ Écraser le modèle ?</h3>
+      <p id="tplOverwriteMsg">Un modèle avec ce nom existe déjà. Voulez-vous le remplacer ?</p>
+      <div class="mini-modal-actions">
+        <button class="btn-secondary" id="tplOverwriteCancelBtn">Annuler</button>
+        <button class="btn-danger" id="tplOverwriteConfirmBtn">Écraser</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini-popup : Confirmation suppression -->
+  <div class="mini-modal-overlay" id="tplDeleteModal">
+    <div class="mini-modal">
+      <h3>🗑️ Supprimer ce modèle ?</h3>
+      <p id="tplDeleteMsg">Supprimer définitivement le modèle ?</p>
+      <div class="mini-modal-actions">
+        <button class="btn-secondary" id="tplDeleteCancelBtn">Annuler</button>
+        <button class="btn-danger" id="tplDeleteConfirmBtn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="icon-box" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 2 2 7v10l10 5 10-5V7l-10-5zm0 2.236L19.764 8 12 11.764 4.236 8 12 4.236zM4 9.618l7 3.5v7.764l-7-3.5V9.618zm9 11.264v-7.764l7-3.5v7.764l-7 3.5z"/>
     </symbol>
   </svg>
-<script>
+
+  <script>
     // =============================================================
     // ÉTAT GLOBAL
     // =============================================================
@@ -553,6 +628,7 @@
         if (!visibleColumns.includes('REF_JACTAL')) visibleColumns.unshift('REF_JACTAL');
       }
       window.__userPrefs = prefs;
+      loadExportTemplates();
     }
 
     function schedulePrefsSave() {
@@ -766,7 +842,7 @@
     // =============================================================
     // POPUP EXPORT
     // =============================================================
-    function openExportModal() { renderAvailable(); renderSelected(); updateExportInfo(); document.getElementById('exportModal').classList.add('open'); }
+    function openExportModal() { loadExportTemplates(); renderTemplateChips(); renderAvailable(); renderSelected(); updateExportInfo(); document.getElementById('exportModal').classList.add('open'); }
     function closeExportModal() { document.getElementById('exportModal').classList.remove('open'); }
 
     function renderAvailable() {
@@ -801,6 +877,7 @@
 
     function renderSelected() {
       const container = document.getElementById('selectedList');
+      checkActiveTemplateMatch();
       if (selectedColumns.length === 0) { container.classList.add('empty'); container.innerHTML = ''; document.getElementById('selectedCount').textContent = '0 colonne'; return; }
       container.classList.remove('empty');
       container.innerHTML = selectedColumns.map((key, idx) => {
@@ -914,6 +991,189 @@
     });
     document.getElementById('removeAllBtn').addEventListener('click', () => { selectedColumns = []; renderAvailable(); renderSelected(); updateExportInfo(); });
     document.getElementById('resetOrderBtn').addEventListener('click', () => { selectedColumns = [...DEFAULT_EXPORT_COLUMNS]; renderAvailable(); renderSelected(); updateExportInfo(); });
+
+    // =============================================================
+    // MODÈLES D'EXPORT
+    // =============================================================
+    const MAX_TEMPLATES = 20;
+    let exportTemplates = [];   // [{name, columns}]
+    let activeTemplateName = null; // Nom du modèle actuellement chargé (null si modifications)
+
+    function getExportTemplates() {
+      return (window.__userPrefs && Array.isArray(window.__userPrefs.export_templates))
+        ? window.__userPrefs.export_templates
+        : [];
+    }
+
+    function loadExportTemplates() {
+      exportTemplates = getExportTemplates();
+    }
+
+    async function saveExportTemplates() {
+      try {
+        const prefs = {
+          view: currentView,
+          sort: currentSort,
+          order: currentOrder,
+          page_size: currentPageSize,
+          visible_columns: visibleColumns,
+          export_templates: exportTemplates
+        };
+        const resp = await fetch('/api/preferences', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(prefs)
+        });
+        if (resp.ok) window.__userPrefs = await resp.json();
+      } catch (err) {
+        console.warn('Impossible de sauvegarder les modèles:', err);
+      }
+    }
+
+    function renderTemplateChips() {
+      const container = document.getElementById('templatesChips');
+      if (exportTemplates.length === 0) {
+        container.innerHTML = '<span class="templates-empty">Aucun modèle enregistré</span>';
+        return;
+      }
+      container.innerHTML = exportTemplates.map(tpl => {
+        const active = activeTemplateName === tpl.name ? 'active' : '';
+        return `<span class="template-chip ${active}" data-name="${escapeHtml(tpl.name)}" title="Charger ${escapeHtml(tpl.name)} (${tpl.columns.length} colonnes)">
+          <span class="chip-label">${escapeHtml(tpl.name)}</span>
+          <button class="chip-remove" data-name="${escapeHtml(tpl.name)}" title="Supprimer">✕</button>
+        </span>`;
+      }).join('');
+
+      // Événement click = charger le modèle
+      container.querySelectorAll('.template-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          if (e.target.classList.contains('chip-remove')) return;
+          loadTemplate(chip.dataset.name);
+        });
+      });
+      container.querySelectorAll('.chip-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          askDeleteTemplate(btn.dataset.name);
+        });
+      });
+    }
+
+    function loadTemplate(name) {
+      const tpl = exportTemplates.find(t => t.name === name);
+      if (!tpl) return;
+      // Filtre les colonnes qui existent toujours
+      selectedColumns = tpl.columns.filter(c => COLUMN_INFO[c]);
+      activeTemplateName = name;
+      renderTemplateChips();
+      renderAvailable();
+      renderSelected();
+      updateExportInfo();
+    }
+
+    // Quand l'utilisateur modifie les colonnes manuellement, on vérifie si ça correspond toujours au modèle actif
+    function checkActiveTemplateMatch() {
+      if (activeTemplateName === null) return;
+      const tpl = exportTemplates.find(t => t.name === activeTemplateName);
+      if (!tpl) { activeTemplateName = null; renderTemplateChips(); return; }
+      // Vérifier que les colonnes et l'ordre correspondent exactement
+      const match = tpl.columns.length === selectedColumns.length
+        && tpl.columns.every((c, i) => c === selectedColumns[i]);
+      if (!match) {
+        activeTemplateName = null;
+        renderTemplateChips();
+      }
+    }
+
+    // === Popup Enregistrer ===
+    function openTplSaveModal() {
+      document.getElementById('tplSaveInput').value = '';
+      document.getElementById('tplSaveError').textContent = '';
+      document.getElementById('tplSaveModal').classList.add('open');
+      setTimeout(() => document.getElementById('tplSaveInput').focus(), 50);
+    }
+    function closeTplSaveModal() {
+      document.getElementById('tplSaveModal').classList.remove('open');
+    }
+
+    function attemptSaveTemplate() {
+      const input = document.getElementById('tplSaveInput');
+      const errEl = document.getElementById('tplSaveError');
+      const name = input.value.trim();
+
+      if (!name) { errEl.textContent = 'Le nom ne peut pas être vide.'; return; }
+      if (name.length > 50) { errEl.textContent = 'Nom trop long (50 caractères max).'; return; }
+      if (selectedColumns.length === 0) { errEl.textContent = 'Ajoutez au moins une colonne avant d\'enregistrer.'; return; }
+
+      const existing = exportTemplates.find(t => t.name === name);
+      if (existing) {
+        // Demander confirmation d'écrasement
+        document.getElementById('tplOverwriteMsg').textContent = `Un modèle nommé « ${name} » existe déjà. Voulez-vous le remplacer ?`;
+        document.getElementById('tplOverwriteModal').classList.add('open');
+        // On stocke le nom pour la suite
+        window.__tplPendingSave = name;
+        return;
+      }
+
+      if (exportTemplates.length >= MAX_TEMPLATES) {
+        errEl.textContent = `Limite atteinte (${MAX_TEMPLATES} modèles max). Supprimez-en un d'abord.`;
+        return;
+      }
+
+      doSaveTemplate(name, false);
+    }
+
+    function doSaveTemplate(name, overwrite) {
+      if (overwrite) {
+        const idx = exportTemplates.findIndex(t => t.name === name);
+        if (idx >= 0) exportTemplates[idx].columns = [...selectedColumns];
+      } else {
+        exportTemplates.push({ name, columns: [...selectedColumns] });
+      }
+      activeTemplateName = name;
+      saveExportTemplates();
+      renderTemplateChips();
+      closeTplSaveModal();
+      document.getElementById('tplOverwriteModal').classList.remove('open');
+    }
+
+    // === Popup Supprimer ===
+    let tplToDelete = null;
+    function askDeleteTemplate(name) {
+      tplToDelete = name;
+      document.getElementById('tplDeleteMsg').textContent = `Supprimer définitivement le modèle « ${name} » ?`;
+      document.getElementById('tplDeleteModal').classList.add('open');
+    }
+    function confirmDeleteTemplate() {
+      if (!tplToDelete) return;
+      exportTemplates = exportTemplates.filter(t => t.name !== tplToDelete);
+      if (activeTemplateName === tplToDelete) activeTemplateName = null;
+      tplToDelete = null;
+      saveExportTemplates();
+      renderTemplateChips();
+      document.getElementById('tplDeleteModal').classList.remove('open');
+    }
+
+    // Events
+    document.getElementById('templateSaveBtn').addEventListener('click', openTplSaveModal);
+    document.getElementById('tplSaveCancelBtn').addEventListener('click', closeTplSaveModal);
+    document.getElementById('tplSaveConfirmBtn').addEventListener('click', attemptSaveTemplate);
+    document.getElementById('tplSaveInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') attemptSaveTemplate();
+    });
+    document.getElementById('tplOverwriteCancelBtn').addEventListener('click', () => {
+      document.getElementById('tplOverwriteModal').classList.remove('open');
+      window.__tplPendingSave = null;
+    });
+    document.getElementById('tplOverwriteConfirmBtn').addEventListener('click', () => {
+      if (window.__tplPendingSave) doSaveTemplate(window.__tplPendingSave, true);
+      window.__tplPendingSave = null;
+    });
+    document.getElementById('tplDeleteCancelBtn').addEventListener('click', () => {
+      tplToDelete = null;
+      document.getElementById('tplDeleteModal').classList.remove('open');
+    });
+    document.getElementById('tplDeleteConfirmBtn').addEventListener('click', confirmDeleteTemplate);
 
     // =============================================================
     // DÉTAIL
@@ -1125,6 +1385,9 @@
     document.getElementById('detailOverlay').addEventListener('click', closeDetail);
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
+        if (document.getElementById('tplSaveModal').classList.contains('open')) { document.getElementById('tplSaveModal').classList.remove('open'); return; }
+        if (document.getElementById('tplOverwriteModal').classList.contains('open')) { document.getElementById('tplOverwriteModal').classList.remove('open'); window.__tplPendingSave = null; return; }
+        if (document.getElementById('tplDeleteModal').classList.contains('open')) { document.getElementById('tplDeleteModal').classList.remove('open'); tplToDelete = null; return; }
         if (document.getElementById('detailPanel').classList.contains('open')) closeDetail();
         if (document.getElementById('exportModal').classList.contains('open')) closeExportModal();
         if (document.getElementById('visibleColsModal').classList.contains('open')) closeVisibleColsModal();
