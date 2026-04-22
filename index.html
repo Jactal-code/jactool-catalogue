@@ -248,6 +248,7 @@
     <button id="visibleColsBtn" class="secondary">🎛️ Colonnes</button>
     <button id="resetBtn" class="secondary">Réinitialiser</button>
     <button id="exportBtn" class="export">📥 Exporter</button>
+    <button id="imagesBtn" class="export">📸 Images</button>
     <select id="pageSizeSelect" class="page-size-select" title="Nombre d'articles par page">
       <option value="50">50 / page</option>
       <option value="100">100 / page</option>
@@ -379,6 +380,85 @@
       </div>
     </div>
   </div>
+
+  <!-- Popup Export Images -->
+  <div class="modal-overlay" id="imagesModal">
+    <div class="modal medium">
+      <div class="modal-header">
+        <h2 class="modal-title">📸 Export des images</h2>
+        <button class="modal-close" id="imgCloseBtn">✕</button>
+      </div>
+      <div style="padding: 20px; overflow-y: auto; flex: 1;">
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 13px; font-weight: 600; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">1. Source des articles</div>
+          <label style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #f9f9fb; border-radius: 6px; cursor: pointer; margin-bottom: 8px;">
+            <input type="radio" name="imgSource" value="filters" checked style="margin-top: 3px;">
+            <div>
+              <div style="font-weight: 500;">Utiliser les articles actuellement filtrés</div>
+              <div style="font-size: 12px; color: #666;" id="imgFiltersCount">—</div>
+            </div>
+          </label>
+          <label style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #f9f9fb; border-radius: 6px; cursor: pointer;">
+            <input type="radio" name="imgSource" value="list" style="margin-top: 3px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 500;">Coller une liste d'identifiants</div>
+              <div style="font-size: 12px; color: #666; margin-bottom: 8px;">Réfs Jactal (contiennent un <code>-</code>), EAN usine (13 chiffres), ou noms de fichiers (ex: <code>00036430.jpg</code>). Séparateurs : virgule, point-virgule, tabulation, retour ligne.</div>
+              <textarea id="imgListInput" rows="6" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical;" placeholder="Ex:&#10;ABC-123&#10;3256789012345&#10;00036430.jpg"></textarea>
+              <div style="font-size: 12px; color: #1e3a5f; margin-top: 6px;" id="imgListStats">—</div>
+            </div>
+          </label>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 13px; font-weight: 600; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">2. Renommage des images</div>
+          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px;">
+            <input type="radio" name="imgRename" value="ref" checked>
+            <span>Réf. Jactal (ex: <code>ABC-123.jpg</code>)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px;">
+            <input type="radio" name="imgRename" value="ean">
+            <span>EAN usine (ex: <code>3256789012345.jpg</code>)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px;">
+            <input type="radio" name="imgRename" value="origin">
+            <span>Nom d'origine (ex: <code>00036430.jpg</code>)</span>
+          </label>
+        </div>
+
+        <!-- Progress pendant l'export -->
+        <div id="imgProgress" style="display: none; padding: 14px; background: #eef2f7; border-radius: 6px; margin-top: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; color: #1e3a5f; margin-bottom: 8px;">
+            <span id="imgProgressLabel">Préparation…</span>
+            <span id="imgProgressCount">0 / 0</span>
+          </div>
+          <div style="background: white; height: 8px; border-radius: 4px; overflow: hidden;">
+            <div id="imgProgressBar" style="background: #2e7d32; height: 100%; width: 0%; transition: width 0.3s;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-info" id="imgInfo">—</div>
+        <div class="modal-footer-actions">
+          <button class="btn-cancel" id="imgCancelBtn">Annuler</button>
+          <button class="btn-validate" id="imgValidateBtn">Télécharger</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini-popup : Rapport après export images -->
+  <div class="mini-modal-overlay" id="imgReportModal">
+    <div class="mini-modal" style="width: 580px;">
+      <h3 id="imgReportTitle">Export terminé</h3>
+      <div id="imgReportSummary" style="margin-bottom: 14px; font-size: 14px;"></div>
+      <div id="imgReportList" style="display: none; max-height: 240px; overflow-y: auto; background: #f9f9fb; padding: 10px 12px; border-radius: 6px; border: 1px solid #e0e0e4; font-family: monospace; font-size: 12px; margin-bottom: 14px;"></div>
+      <div class="mini-modal-actions">
+        <button class="btn-secondary" id="imgReportDownloadBtn" style="display:none;">📄 Télécharger rapport</button>
+        <button class="btn-primary" id="imgReportCloseBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Mini-popup : Enregistrer un modèle -->
   <div class="mini-modal-overlay" id="tplSaveModal">
@@ -1221,6 +1301,295 @@
     document.getElementById('tplDeleteConfirmBtn').addEventListener('click', confirmDeleteTemplate);
 
     // =============================================================
+    // EXPORT IMAGES (ZIP en chunks parallèles)
+    // =============================================================
+    const IMG_CHUNK_SIZE = 100;
+    const IMG_PARALLEL = 3;
+    const IMG_MAX_ARTICLES = 2500;
+
+    function openImagesModal() {
+      document.getElementById('imagesModal').classList.add('open');
+      document.getElementById('imgProgress').style.display = 'none';
+      document.getElementById('imgListInput').value = '';
+      document.getElementById('imgListStats').textContent = '—';
+      document.getElementById('imgValidateBtn').disabled = false;
+      document.getElementById('imgValidateBtn').textContent = 'Télécharger';
+      document.querySelector('input[name="imgSource"][value="filters"]').checked = true;
+      document.querySelector('input[name="imgRename"][value="ref"]').checked = true;
+      document.getElementById('imgFiltersCount').textContent = `${currentTotal.toLocaleString('fr-FR')} article${currentTotal > 1 ? 's' : ''} actuellement`;
+      updateImgInfo();
+    }
+
+    function closeImagesModal() {
+      document.getElementById('imagesModal').classList.remove('open');
+    }
+
+    // Split texte collé : accepte virgule / point-virgule / tabulation / retours ligne
+    function parsePastedList(text) {
+      if (!text) return [];
+      return text
+        .split(/[\s,;]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+    }
+
+    // Détection auto du type d'identifiant
+    // EAN : exactement 13 chiffres
+    // Fichier : contient . suivi d'une extension image
+    // REF : contient un -
+    function classifyIdentifier(id) {
+      if (/^\d{13}$/.test(id)) return 'ean';
+      if (/\.(jpe?g|png|gif|webp|bmp|tiff?)$/i.test(id)) return 'file';
+      if (id.includes('-')) return 'ref';
+      // Fallback : si uniquement chiffres → EAN (moins strict), sinon REF
+      if (/^\d+$/.test(id)) return 'ean';
+      return 'ref';
+    }
+
+    function classifyAll(ids) {
+      const refs = [], eans = [], files = [], unknown = [];
+      ids.forEach(id => {
+        const type = classifyIdentifier(id);
+        if (type === 'ref') refs.push(id);
+        else if (type === 'ean') eans.push(id);
+        else if (type === 'file') files.push(id);
+        else unknown.push(id);
+      });
+      return { refs, eans, files, unknown };
+    }
+
+    function updateImgInfo() {
+      const info = document.getElementById('imgInfo');
+      const validateBtn = document.getElementById('imgValidateBtn');
+      const source = document.querySelector('input[name="imgSource"]:checked').value;
+
+      let count = 0;
+      let label = '';
+
+      if (source === 'filters') {
+        count = currentTotal;
+        label = `${count.toLocaleString('fr-FR')} article(s) selon les filtres actuels`;
+      } else {
+        const ids = parsePastedList(document.getElementById('imgListInput').value);
+        count = ids.length;
+        const { refs, eans, files } = classifyAll(ids);
+        const parts = [];
+        if (refs.length) parts.push(`${refs.length} réf.`);
+        if (eans.length) parts.push(`${eans.length} EAN`);
+        if (files.length) parts.push(`${files.length} fichier${files.length > 1 ? 's' : ''}`);
+        label = count === 0 ? 'Aucun identifiant collé' : `${count} identifiant${count > 1 ? 's' : ''} détecté${count > 1 ? 's' : ''} (${parts.join(', ')})`;
+        document.getElementById('imgListStats').textContent = label;
+      }
+
+      info.className = 'modal-footer-info';
+      validateBtn.disabled = count === 0;
+
+      if (count === 0) {
+        info.textContent = source === 'filters' ? 'Aucun article ne correspond aux filtres' : 'Collez au moins un identifiant';
+        return;
+      }
+
+      if (count > IMG_MAX_ARTICLES) {
+        info.textContent = `⚠️ ${count.toLocaleString('fr-FR')} articles, limite ${IMG_MAX_ARTICLES.toLocaleString('fr-FR')}. Réduisez la sélection.`;
+        info.className = 'modal-footer-info warning';
+        validateBtn.disabled = true;
+        return;
+      }
+
+      const chunks = Math.ceil(count / IMG_CHUNK_SIZE);
+      info.textContent = `${count.toLocaleString('fr-FR')} articles · ${chunks} fichier${chunks > 1 ? 's' : ''} ZIP · ~${Math.ceil(chunks * 25 / IMG_PARALLEL)}s estimés`;
+    }
+
+    async function startImagesExport() {
+      const source = document.querySelector('input[name="imgSource"]:checked').value;
+      const rename = document.querySelector('input[name="imgRename"]:checked').value;
+
+      // Construire les paramètres de base
+      const baseParams = new URLSearchParams();
+      baseParams.append('rename', rename);
+      baseParams.append('chunkSize', String(IMG_CHUNK_SIZE));
+
+      let totalArticles;
+
+      if (source === 'filters') {
+        totalArticles = currentTotal;
+        if (currentSearch) baseParams.append('search', currentSearch);
+        for (const k in filters) {
+          const v = filters[k];
+          if (v instanceof Set && v.size > 0) baseParams.append(k, [...v].join(','));
+          else if (typeof v === 'string' && v) baseParams.append(k, v);
+        }
+      } else {
+        const ids = parsePastedList(document.getElementById('imgListInput').value);
+        const { refs, eans, files } = classifyAll(ids);
+        if (refs.length) baseParams.append('refs', refs.join(','));
+        if (eans.length) baseParams.append('eans', eans.join(','));
+        if (files.length) baseParams.append('files', files.join(','));
+        totalArticles = ids.length;
+      }
+
+      const totalChunks = Math.ceil(totalArticles / IMG_CHUNK_SIZE);
+      const validateBtn = document.getElementById('imgValidateBtn');
+      validateBtn.disabled = true;
+      validateBtn.textContent = 'Téléchargement…';
+
+      // UI progress
+      const progressDiv = document.getElementById('imgProgress');
+      const progressLabel = document.getElementById('imgProgressLabel');
+      const progressCount = document.getElementById('imgProgressCount');
+      const progressBar = document.getElementById('imgProgressBar');
+      progressDiv.style.display = 'block';
+      progressLabel.textContent = 'Téléchargement en cours…';
+      progressCount.textContent = `0 / ${totalChunks}`;
+      progressBar.style.width = '0%';
+
+      // Collecter les rapports de tous les chunks
+      const allReports = [];
+      let completed = 0;
+
+      // Construire la liste des chunks à traiter
+      const chunkIndexes = Array.from({ length: totalChunks }, (_, i) => i);
+
+      // Worker : traite un chunk (télécharge le ZIP)
+      async function processChunk(chunkIdx) {
+        const params = new URLSearchParams(baseParams);
+        params.append('chunk', String(chunkIdx));
+        try {
+          const resp = await fetch('/api/images-zip?' + params.toString());
+          if (!resp.ok) {
+            let errMsg = `HTTP ${resp.status}`;
+            try { const j = await resp.json(); if (j.error) errMsg = j.error; } catch (_) {}
+            throw new Error(errMsg);
+          }
+          // Récupérer le rapport
+          const reportB64 = resp.headers.get('X-Export-Report');
+          if (reportB64) {
+            try {
+              const report = JSON.parse(atob(reportB64));
+              allReports.push(report);
+            } catch (_) {}
+          }
+          // Télécharger le ZIP
+          const blob = await resp.blob();
+          const disposition = resp.headers.get('Content-Disposition') || '';
+          const match = disposition.match(/filename="(.+)"/);
+          const filename = match ? match[1] : `photos_part${chunkIdx + 1}.zip`;
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url; link.download = filename;
+          document.body.appendChild(link); link.click(); document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          allReports.push({
+            chunkIndex: chunkIdx,
+            error: err.message,
+            skipped: [`[Chunk ${chunkIdx + 1}] Erreur : ${err.message}`]
+          });
+        } finally {
+          completed++;
+          const pct = (completed / totalChunks) * 100;
+          progressBar.style.width = `${pct}%`;
+          progressCount.textContent = `${completed} / ${totalChunks}`;
+        }
+      }
+
+      // Run avec parallélisme limité
+      const queue = [...chunkIndexes];
+      const runners = [];
+      for (let i = 0; i < Math.min(IMG_PARALLEL, queue.length); i++) {
+        runners.push((async () => {
+          while (queue.length) {
+            const idx = queue.shift();
+            await processChunk(idx);
+          }
+        })());
+      }
+      await Promise.all(runners);
+
+      // Afficher le rapport final
+      closeImagesModal();
+      showImgReport(allReports, totalArticles);
+    }
+
+    function showImgReport(reports, totalArticles) {
+      const titleEl = document.getElementById('imgReportTitle');
+      const summaryEl = document.getElementById('imgReportSummary');
+      const listEl = document.getElementById('imgReportList');
+      const downloadBtn = document.getElementById('imgReportDownloadBtn');
+
+      let totalDownloaded = 0;
+      const allSkipped = [];
+      const allNotFound = [];
+      let chunkErrors = 0;
+
+      reports.forEach(r => {
+        if (r.error) { chunkErrors++; return; }
+        totalDownloaded += r.downloaded || 0;
+        if (r.skipped) allSkipped.push(...r.skipped);
+        if (r.notFound) {
+          r.notFound.forEach(nf => {
+            allNotFound.push(`${nf.id} (${nf.type}) — ${nf.reason}`);
+          });
+        }
+      });
+
+      // Dédupliquer notFound (apparaît dans tous les chunks)
+      const uniqueNotFound = [...new Set(allNotFound)];
+      const allIssues = [...allSkipped, ...uniqueNotFound];
+
+      titleEl.textContent = allIssues.length === 0 ? '✅ Export terminé' : '⚠️ Export terminé avec manquantes';
+
+      let summary = `<strong>${totalDownloaded}</strong> image${totalDownloaded > 1 ? 's' : ''} téléchargée${totalDownloaded > 1 ? 's' : ''} en ${reports.length - chunkErrors} fichier${(reports.length - chunkErrors) > 1 ? 's' : ''} ZIP.`;
+      if (chunkErrors > 0) summary += ` <span style="color:#d33;">${chunkErrors} chunk(s) en erreur.</span>`;
+      if (allIssues.length > 0) summary += `<br><strong style="color:#ed6c02;">${allIssues.length}</strong> article${allIssues.length > 1 ? 's' : ''} sans image ou introuvable${allIssues.length > 1 ? 's' : ''}.`;
+      summaryEl.innerHTML = summary;
+
+      if (allIssues.length > 0) {
+        const preview = allIssues.slice(0, 50);
+        listEl.innerHTML = preview.map(s => escapeHtml(s)).join('<br>') + (allIssues.length > 50 ? `<br><em>… et ${allIssues.length - 50} autres (voir rapport complet)</em>` : '');
+        listEl.style.display = 'block';
+        downloadBtn.style.display = 'inline-block';
+        downloadBtn.onclick = () => {
+          const now = new Date();
+          const content = `Rapport d'export d'images - ${now.toLocaleString('fr-FR')}\n` +
+                          `Total articles demandés : ${totalArticles}\n` +
+                          `Images téléchargées : ${totalDownloaded}\n` +
+                          `Articles manquants : ${allIssues.length}\n\n` +
+                          `=== Détails ===\n` +
+                          allIssues.join('\n');
+          const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `rapport_images_${now.toISOString().slice(0, 10).replace(/-/g, '')}.txt`;
+          document.body.appendChild(link); link.click(); document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        };
+      } else {
+        listEl.style.display = 'none';
+        downloadBtn.style.display = 'none';
+      }
+
+      document.getElementById('imgReportModal').classList.add('open');
+    }
+
+    // Events
+    document.getElementById('imagesBtn').addEventListener('click', openImagesModal);
+    document.getElementById('imgCloseBtn').addEventListener('click', closeImagesModal);
+    document.getElementById('imgCancelBtn').addEventListener('click', closeImagesModal);
+    document.getElementById('imgValidateBtn').addEventListener('click', startImagesExport);
+    document.querySelectorAll('input[name="imgSource"]').forEach(r => r.addEventListener('change', updateImgInfo));
+    document.getElementById('imgListInput').addEventListener('input', updateImgInfo);
+    // Bascule auto sur "list" si l'utilisateur commence à taper dans le textarea
+    document.getElementById('imgListInput').addEventListener('focus', () => {
+      document.querySelector('input[name="imgSource"][value="list"]').checked = true;
+      updateImgInfo();
+    });
+    document.getElementById('imgReportCloseBtn').addEventListener('click', () => {
+      document.getElementById('imgReportModal').classList.remove('open');
+    });
+
+    // =============================================================
     // DÉTAIL
     // =============================================================
     const DETAIL_TABS = [
@@ -1433,6 +1802,8 @@
         if (document.getElementById('tplSaveModal').classList.contains('open')) { document.getElementById('tplSaveModal').classList.remove('open'); return; }
         if (document.getElementById('tplOverwriteModal').classList.contains('open')) { document.getElementById('tplOverwriteModal').classList.remove('open'); window.__tplPendingSave = null; return; }
         if (document.getElementById('tplDeleteModal').classList.contains('open')) { document.getElementById('tplDeleteModal').classList.remove('open'); tplToDelete = null; return; }
+        if (document.getElementById('imgReportModal').classList.contains('open')) { document.getElementById('imgReportModal').classList.remove('open'); return; }
+        if (document.getElementById('imagesModal').classList.contains('open')) closeImagesModal();
         if (document.getElementById('detailPanel').classList.contains('open')) closeDetail();
         if (document.getElementById('exportModal').classList.contains('open')) closeExportModal();
         if (document.getElementById('visibleColsModal').classList.contains('open')) closeVisibleColsModal();
