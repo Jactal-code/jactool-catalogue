@@ -140,7 +140,7 @@
     .photo-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .photo-thumb-empty { font-size: 11px; color: #bbb; }
 
-    /* POPUP */
+    /* POPUP génériques */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
     .modal-overlay.open { display: flex; }
     .modal { background: white; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 100%; max-height: 90vh; display: flex; flex-direction: column; }
@@ -150,7 +150,7 @@
     .modal-title { margin: 0; font-size: 18px; color: #1e3a5f; }
     .modal-close { background: white; border: 1px solid #ccc; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px; color: #555; }
 
-    /* EXPORT */
+    /* DEUX ZONES (utilisé pour EXPORT et COLONNES VISIBLES) */
     .export-body { flex: 1; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 0; }
     .export-col { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
     .export-col + .export-col { border-left: 1px solid #e5e5e9; }
@@ -184,22 +184,8 @@
     .sel-card .cat-tag { background: #eef2f7; color: #1e3a5f; font-size: 10px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; flex-shrink: 0; }
     .sel-card .remove { background: none; border: none; color: #999; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; flex-shrink: 0; }
     .sel-card .remove:hover { color: #d33; }
-
-    /* SÉLECTEUR COLONNES VISIBLES */
-    .visible-cols-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
-    .visible-cols-toolbar { padding: 12px 16px; background: #f9f9fb; border-bottom: 1px solid #e5e5e9; display: flex; gap: 8px; flex-shrink: 0; }
-    .visible-cols-toolbar input { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
-    .visible-cols-toolbar button { padding: 8px 12px; border: 1px solid #1e3a5f; background: white; color: #1e3a5f; border-radius: 6px; cursor: pointer; font-size: 13px; white-space: nowrap; }
-    .visible-cols-toolbar button:hover { background: #eef2f7; }
-    .visible-cols-list { flex: 1; overflow-y: auto; padding: 16px; }
-    .vc-cat { margin-bottom: 12px; }
-    .vc-cat-header { font-size: 12px; font-weight: 600; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 8px; background: #eef2f7; border-radius: 4px; margin-bottom: 6px; }
-    .vc-cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 8px; }
-    .vc-item { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; border-radius: 4px; }
-    .vc-item:hover { background: #eef2f7; }
-    .vc-item input { margin: 0; }
-    .vc-item.locked { color: #888; cursor: not-allowed; }
-    .vc-item.hidden { display: none; }
+    .sel-card.locked { border-left-color: #999; background: #fafbfc; cursor: default; }
+    .sel-card.locked .lock { color: #999; font-size: 14px; flex-shrink: 0; }
 
     .modal-footer { padding: 14px 20px; border-top: 1px solid #e5e5e9; display: flex; justify-content: space-between; align-items: center; background: #f9f9fb; border-radius: 0 0 10px 10px; flex-shrink: 0; }
     .modal-footer-info { font-size: 13px; color: #555; flex: 1; }
@@ -311,26 +297,47 @@
     </div>
   </div>
 
-  <!-- Popup Colonnes visibles -->
+  <!-- Popup Colonnes visibles (drag & drop) -->
   <div class="modal-overlay" id="visibleColsModal">
-    <div class="modal medium">
+    <div class="modal wide">
       <div class="modal-header">
-        <h2 class="modal-title">🎛️ Colonnes affichées</h2>
+        <h2 class="modal-title">🎛️ Colonnes affichées — choisissez et ordonnez</h2>
         <button class="modal-close" id="vcCloseBtn">✕</button>
       </div>
-      <div class="visible-cols-body">
-        <div class="visible-cols-toolbar">
-          <input type="text" id="vcSearch" placeholder="Rechercher une colonne…">
-          <button id="vcSelectAll">Tout cocher</button>
-          <button id="vcSelectNone">Tout décocher</button>
-          <button id="vcReset">Par défaut</button>
+      <div class="export-body">
+        <div class="export-col">
+          <div class="export-col-header">
+            <div class="export-col-title">
+              <span>📂 Colonnes disponibles</span>
+              <span class="count" id="vcAvailCount">—</span>
+            </div>
+            <div class="export-col-actions">
+              <input type="text" id="vcSearch" placeholder="Rechercher une colonne…">
+              <button id="vcAddAllBtn">Tout ajouter</button>
+            </div>
+          </div>
+          <div class="export-col-body" id="vcAvailList"></div>
         </div>
-        <div class="visible-cols-list" id="vcList"></div>
+        <div class="export-col">
+          <div class="export-col-header">
+            <div class="export-col-title">
+              <span>✅ Affichées (dans l'ordre)</span>
+              <span class="count" id="vcSelectedCount">0 colonne</span>
+            </div>
+            <div class="export-col-actions">
+              <button id="vcResetOrderBtn">Par défaut</button>
+              <button id="vcRemoveAllBtn">Tout retirer</button>
+            </div>
+          </div>
+          <div class="export-col-body" id="vcSelectedListContainer">
+            <div class="selected-list" id="vcSelectedList"></div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <div class="modal-footer-info" id="vcInfo">— colonne(s) sélectionnée(s)</div>
         <div class="modal-footer-actions">
-          <button class="btn-cancel" id="vcCancelBtn">Fermer</button>
+          <button class="btn-cancel" id="vcCancelBtn">Annuler</button>
           <button class="btn-validate" id="vcValidateBtn">Appliquer</button>
         </div>
       </div>
@@ -374,7 +381,7 @@
     };
 
     // =============================================================
-    // CONFIGURATION COLONNES (commun export + sélecteur + table dynamique)
+    // CONFIGURATION COLONNES
     // =============================================================
     const ALL_COLUMNS = [
       { cat: 'Identification', cols: [
@@ -421,7 +428,7 @@
       ]},
       { cat: 'Stocks & Logistique', cols: [
         ['STOCK1', 'Stock 1', 'num'], ['STOCK2', 'Stock 2', 'num'], ['STOCK3', 'Stock 3', 'num'],
-        ['LARGeur_MM_PRODUIT', 'Largeur prod (mm)', 'num'], ['LARGEUR_MM_PRODUIT', 'Largeur prod (mm)', 'num'],
+        ['LARGEUR_MM_PRODUIT', 'Largeur prod (mm)', 'num'],
         ['HAUTEUR_MM_PRODUIT', 'Hauteur prod (mm)', 'num'],
         ['PROFONDEUR_MM_PRODUIT', 'Profondeur prod (mm)', 'num'], ['POIDS_G_PRODUIT', 'Poids prod (g)', 'num'],
         ['LARGEUR_MM_COLIS', 'Largeur colis (mm)', 'num'], ['HAUTEUR_MM_COLIS', 'Hauteur colis (mm)', 'num'],
@@ -462,8 +469,6 @@
         ['FICHE_SECURITE', 'Fiche sécu', 'text'], ['CODE_DOUANIER', 'Code douanier', 'text'],
       ]},
     ];
-    // Nettoyage doublon éventuel
-    ALL_COLUMNS.forEach(g => { g.cols = g.cols.filter((c, i, arr) => arr.findIndex(x => x[0] === c[0]) === i); });
 
     const COLUMN_INFO = {};
     ALL_COLUMNS.forEach(g => g.cols.forEach(([key, label, type]) => {
@@ -472,15 +477,11 @@
 
     const DEFAULT_VISIBLE_COLUMNS = ['REF_JACTAL', 'LIBELLE_STANDART', 'NOM_FOURNISSEUR', 'STOCK1', 'STOCK2', 'STOCK3', 'PERTINANCE'];
     const DEFAULT_EXPORT_COLUMNS = ['REF_JACTAL', 'LIBELLE_STANDART', 'NOM_FOURNISSEUR', 'STOCK1', 'STOCK2', 'STOCK3', 'PERTINANCE'];
-    const LOCKED_VISIBLE = new Set(['REF_JACTAL']); // Non désactivables
+    const LOCKED_VISIBLE = new Set(['REF_JACTAL']);
 
-    // Colonnes que l'utilisateur a choisi de voir en vue Liste (et Vignette)
     let visibleColumns = [...DEFAULT_VISIBLE_COLUMNS];
-    // Colonnes dans la popup Export (avec ordre)
     let selectedColumns = [...DEFAULT_EXPORT_COLUMNS];
-
-    // Pour la popup Colonnes visibles : état temporaire pendant qu'on coche/décoche
-    let vcDraft = new Set(visibleColumns);
+    let vcSelected = [...visibleColumns];
 
     // =============================================================
     // HELPERS
@@ -512,8 +513,6 @@
       if (type === 'statut') return STATUT_LABELS[val] || val;
       return String(val);
     }
-
-    function isNumericType(type) { return type === 'num' || type === 'euro'; }
 
     // =============================================================
     // PRÉFÉRENCES UTILISATEUR
@@ -552,7 +551,6 @@
       if (Array.isArray(prefs.visible_columns) && prefs.visible_columns.length > 0) {
         visibleColumns = prefs.visible_columns.filter(c => COLUMN_INFO[c]);
         if (!visibleColumns.includes('REF_JACTAL')) visibleColumns.unshift('REF_JACTAL');
-        vcDraft = new Set(visibleColumns);
       }
       window.__userPrefs = prefs;
     }
@@ -585,59 +583,159 @@
     }
 
     // =============================================================
-    // POPUP COLONNES VISIBLES
+    // POPUP COLONNES VISIBLES (drag & drop)
     // =============================================================
     function openVisibleColsModal() {
-      vcDraft = new Set(visibleColumns);
-      renderVisibleColsList();
+      vcSelected = [...visibleColumns];
+      vcSelected = vcSelected.filter(k => k !== 'REF_JACTAL');
+      vcSelected.unshift('REF_JACTAL');
+      renderVcAvailable();
+      renderVcSelected();
       updateVcInfo();
       document.getElementById('visibleColsModal').classList.add('open');
     }
+
     function closeVisibleColsModal() {
       document.getElementById('visibleColsModal').classList.remove('open');
     }
 
-    function renderVisibleColsList() {
+    function renderVcAvailable() {
       const filter = document.getElementById('vcSearch').value.toLowerCase();
-      const container = document.getElementById('vcList');
+      const container = document.getElementById('vcAvailList');
+      const selectedSet = new Set(vcSelected);
+      let totalAvailable = 0;
+
       container.innerHTML = ALL_COLUMNS.map(group => {
-        const items = group.cols.map(([key, label]) => {
-          const locked = LOCKED_VISIBLE.has(key);
-          const checked = vcDraft.has(key) ? 'checked' : '';
+        const items = group.cols.filter(([key]) => !selectedSet.has(key)).map(([key, label]) => {
           const match = !filter || label.toLowerCase().includes(filter) || key.toLowerCase().includes(filter);
-          return `<label class="vc-item ${locked ? 'locked' : ''} ${match ? '' : 'hidden'}">
-            <input type="checkbox" value="${escapeHtml(key)}" ${checked} ${locked ? 'disabled' : ''}>
-            ${escapeHtml(label)}
-          </label>`;
+          if (match) totalAvailable++;
+          return `<div class="avail-item ${match ? '' : 'hidden'}" data-key="${key}"><span class="plus">+</span><span>${escapeHtml(label)}</span></div>`;
         }).join('');
-        return `<div class="vc-cat">
-          <div class="vc-cat-header">${escapeHtml(group.cat)}</div>
-          <div class="vc-cols">${items}</div>
-        </div>`;
+        const countInCat = group.cols.filter(([key]) => !selectedSet.has(key)).length;
+        const allSelected = countInCat === 0;
+        return `<div class="avail-category"><div class="avail-cat-header"><span>${escapeHtml(group.cat)} ${allSelected ? '' : `(${countInCat})`}</span><button data-cat="${escapeHtml(group.cat)}" ${allSelected ? 'disabled' : ''}>+ Tout ajouter</button></div><div class="avail-list">${items}</div></div>`;
       }).join('');
 
-      container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', () => {
-          if (cb.checked) vcDraft.add(cb.value);
-          else vcDraft.delete(cb.value);
-          vcDraft.add('REF_JACTAL'); // toujours
-          updateVcInfo();
+      document.getElementById('vcAvailCount').textContent = `${totalAvailable} restante${totalAvailable > 1 ? 's' : ''}`;
+
+      container.querySelectorAll('.avail-item').forEach(item => {
+        item.addEventListener('click', () => {
+          vcSelected.push(item.dataset.key);
+          renderVcAvailable(); renderVcSelected(); updateVcInfo();
+        });
+      });
+      container.querySelectorAll('.avail-cat-header button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const catName = btn.dataset.cat;
+          const group = ALL_COLUMNS.find(g => g.cat === catName);
+          if (!group) return;
+          group.cols.forEach(([key]) => { if (!vcSelected.includes(key)) vcSelected.push(key); });
+          renderVcAvailable(); renderVcSelected(); updateVcInfo();
         });
       });
     }
 
+    function renderVcSelected() {
+      const container = document.getElementById('vcSelectedList');
+      if (vcSelected.length === 0) {
+        container.classList.add('empty'); container.innerHTML = '';
+        document.getElementById('vcSelectedCount').textContent = '0 colonne';
+        return;
+      }
+      container.classList.remove('empty');
+      container.innerHTML = vcSelected.map((key, idx) => {
+        const info = COLUMN_INFO[key] || { label: key, cat: '' };
+        const locked = LOCKED_VISIBLE.has(key);
+        const dragAttr = locked ? '' : 'draggable="true"';
+        const removeBtn = locked
+          ? `<span class="lock" title="Toujours affichée">🔒</span>`
+          : `<button class="remove" title="Retirer">✕</button>`;
+        const gripHtml = locked ? '' : `<span class="grip">⋮⋮</span>`;
+        return `<div class="sel-card ${locked ? 'locked' : ''}" ${dragAttr} data-key="${key}" data-index="${idx}">
+          ${gripHtml}
+          <span class="num">${idx + 1}</span>
+          <span class="lbl">${escapeHtml(info.label)}</span>
+          <span class="cat-tag">${escapeHtml(info.cat)}</span>
+          ${removeBtn}
+        </div>`;
+      }).join('');
+      document.getElementById('vcSelectedCount').textContent = `${vcSelected.length} colonne${vcSelected.length > 1 ? 's' : ''}`;
+      setupVcSelectedEvents();
+    }
+
+    function setupVcSelectedEvents() {
+      const container = document.getElementById('vcSelectedList');
+      const cards = container.querySelectorAll('.sel-card');
+
+      cards.forEach(card => {
+        const removeBtn = card.querySelector('.remove');
+        if (removeBtn) {
+          removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            vcSelected = vcSelected.filter(c => c !== card.dataset.key);
+            renderVcAvailable(); renderVcSelected(); updateVcInfo();
+          });
+        }
+      });
+
+      let draggedCard = null;
+      cards.forEach(card => {
+        if (card.classList.contains('locked')) return;
+        card.addEventListener('dragstart', (e) => {
+          draggedCard = card; card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', card.dataset.key);
+        });
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          cards.forEach(c => c.classList.remove('drop-target'));
+          draggedCard = null;
+        });
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+          if (card !== draggedCard) {
+            cards.forEach(c => c.classList.remove('drop-target'));
+            card.classList.add('drop-target');
+          }
+        });
+        card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          if (draggedCard && draggedCard !== card) {
+            const fromKey = draggedCard.dataset.key;
+            const toKey = card.dataset.key;
+            if (toKey === 'REF_JACTAL') return;
+            const fromIdx = vcSelected.indexOf(fromKey);
+            const toIdx = vcSelected.indexOf(toKey);
+            vcSelected.splice(fromIdx, 1);
+            const newToIdx = fromIdx < toIdx ? toIdx - 1 : toIdx;
+            vcSelected.splice(newToIdx, 0, fromKey);
+            renderVcSelected(); updateVcInfo();
+          }
+        });
+      });
+
+      container.addEventListener('dragover', (e) => e.preventDefault());
+      container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (draggedCard && e.target === container) {
+          const fromKey = draggedCard.dataset.key;
+          const fromIdx = vcSelected.indexOf(fromKey);
+          vcSelected.splice(fromIdx, 1);
+          vcSelected.push(fromKey);
+          renderVcSelected(); updateVcInfo();
+        }
+      });
+    }
+
     function updateVcInfo() {
-      document.getElementById('vcInfo').textContent = `${vcDraft.size} colonne${vcDraft.size > 1 ? 's' : ''} sélectionnée${vcDraft.size > 1 ? 's' : ''}`;
+      document.getElementById('vcInfo').textContent =
+        `${vcSelected.length} colonne${vcSelected.length > 1 ? 's' : ''} sélectionnée${vcSelected.length > 1 ? 's' : ''}`;
     }
 
     function applyVisibleCols() {
-      // On conserve l'ordre : d'abord ceux qui sont déjà dans visibleColumns, puis les nouveaux dans l'ordre de ALL_COLUMNS
-      const ordered = [];
-      visibleColumns.forEach(k => { if (vcDraft.has(k)) ordered.push(k); });
-      ALL_COLUMNS.forEach(g => g.cols.forEach(([k]) => {
-        if (vcDraft.has(k) && !ordered.includes(k)) ordered.push(k);
-      }));
-      if (!ordered.includes('REF_JACTAL')) ordered.unshift('REF_JACTAL');
+      const ordered = vcSelected.filter(k => k !== 'REF_JACTAL');
+      ordered.unshift('REF_JACTAL');
       visibleColumns = ordered;
       closeVisibleColsModal();
       loadArticles();
@@ -648,22 +746,25 @@
     document.getElementById('vcCloseBtn').addEventListener('click', closeVisibleColsModal);
     document.getElementById('vcCancelBtn').addEventListener('click', closeVisibleColsModal);
     document.getElementById('vcValidateBtn').addEventListener('click', applyVisibleCols);
-    document.getElementById('vcSearch').addEventListener('input', renderVisibleColsList);
-    document.getElementById('vcSelectAll').addEventListener('click', () => {
-      ALL_COLUMNS.forEach(g => g.cols.forEach(([k]) => vcDraft.add(k)));
-      renderVisibleColsList(); updateVcInfo();
+    document.getElementById('vcSearch').addEventListener('input', renderVcAvailable);
+    document.getElementById('vcAddAllBtn').addEventListener('click', () => {
+      ALL_COLUMNS.forEach(g => g.cols.forEach(([key]) => {
+        if (!vcSelected.includes(key)) vcSelected.push(key);
+      }));
+      renderVcAvailable(); renderVcSelected(); updateVcInfo();
     });
-    document.getElementById('vcSelectNone').addEventListener('click', () => {
-      vcDraft = new Set(['REF_JACTAL']);
-      renderVisibleColsList(); updateVcInfo();
+    document.getElementById('vcRemoveAllBtn').addEventListener('click', () => {
+      vcSelected = ['REF_JACTAL'];
+      renderVcAvailable(); renderVcSelected(); updateVcInfo();
     });
-    document.getElementById('vcReset').addEventListener('click', () => {
-      vcDraft = new Set(DEFAULT_VISIBLE_COLUMNS);
-      renderVisibleColsList(); updateVcInfo();
+    document.getElementById('vcResetOrderBtn').addEventListener('click', () => {
+      vcSelected = [...DEFAULT_VISIBLE_COLUMNS];
+      if (!vcSelected.includes('REF_JACTAL')) vcSelected.unshift('REF_JACTAL');
+      renderVcAvailable(); renderVcSelected(); updateVcInfo();
     });
 
     // =============================================================
-    // POPUP EXPORT (drag & drop, inchangé sauf conf commune)
+    // POPUP EXPORT
     // =============================================================
     function openExportModal() { renderAvailable(); renderSelected(); updateExportInfo(); document.getElementById('exportModal').classList.add('open'); }
     function closeExportModal() { document.getElementById('exportModal').classList.remove('open'); }
@@ -815,7 +916,7 @@
     document.getElementById('resetOrderBtn').addEventListener('click', () => { selectedColumns = [...DEFAULT_EXPORT_COLUMNS]; renderAvailable(); renderSelected(); updateExportInfo(); });
 
     // =============================================================
-    // DÉTAIL (identique à la version précédente)
+    // DÉTAIL
     // =============================================================
     const DETAIL_TABS = [
       { id: 'infos', label: '📋 Infos', render: (a) => {
@@ -1155,7 +1256,6 @@
         if (currentSearch) params.append('search', currentSearch);
         params.append('sort', currentSort);
         params.append('order', currentOrder);
-        // Demander au serveur les colonnes visibles (utile quand l'utilisateur ajoute des champs pas dans le set de base)
         params.append('columns', visibleColumns.join(','));
         for (const k in filters) {
           const v = filters[k];
@@ -1208,7 +1308,6 @@
       return currentOrder === 'asc' ? '↑' : '↓';
     }
 
-    // Mapping colonne → clé de tri serveur (pour les colonnes triables)
     const SORTABLE_MAP = {
       'REF_JACTAL': 'ref',
       'LIBELLE_STANDART': 'libelle',
@@ -1223,12 +1322,8 @@
       const type = info.type;
       const val = article[key];
 
-      if (key === 'URL_PHOTO1') {
-        return `<td>${photoOrPlaceholder(val, 'thumb')}</td>`;
-      }
-      if (type === 'pertinance') {
-        return `<td>${pertBadge(val)}</td>`;
-      }
+      if (key === 'URL_PHOTO1') return `<td>${photoOrPlaceholder(val, 'thumb')}</td>`;
+      if (type === 'pertinance') return `<td>${pertBadge(val)}</td>`;
       if (type === 'bool') {
         const truthy = (val === 1 || val === '1' || val === true || val === 'OUI' || val === 'oui' || val === 'O');
         if (val === null || val === undefined || val === '') return `<td><span class="no-badge">Non</span></td>`;
@@ -1243,15 +1338,12 @@
         return `<td class="num">${escapeHtml(val)}</td>`;
       }
       if (type === 'statut') return `<td>${escapeHtml(STATUT_LABELS[val] || val || '—')}</td>`;
-      // text par défaut
       if (val === null || val === undefined || val === '') return `<td>—</td>`;
       return `<td class="truncate" title="${escapeHtml(val)}">${escapeHtml(val)}</td>`;
     }
 
     function renderList(articles) {
-      // Colonnes à afficher : on insère toujours Photo en tête si elle n'est pas déjà dedans
       const cols = [...visibleColumns];
-      // Header
       const headerHtml = ['<th>Photo</th>'].concat(cols.map(key => {
         const info = COLUMN_INFO[key];
         const label = info ? info.label : key;
@@ -1285,9 +1377,7 @@
     }
 
     function renderGrid(articles) {
-      // Colonnes à afficher dans la vignette : on skip URL_PHOTO1 (déjà en grand)
       const colsForCard = visibleColumns.filter(k => k !== 'URL_PHOTO1' && k !== 'REF_JACTAL');
-
       const cards = articles.map(a => {
         const rows = colsForCard.map(key => {
           const info = COLUMN_INFO[key];
@@ -1299,7 +1389,6 @@
           const display = formatCellValue(val, info.type);
           return `<div class="card-row"><span class="card-lbl">${escapeHtml(info.label)}</span><span class="card-val" title="${escapeHtml(display)}">${escapeHtml(display)}</span></div>`;
         }).join('');
-
         return `<div class="card" data-ref="${escapeHtml(a.REF_JACTAL ?? '')}">
           ${photoOrPlaceholder(a.URL_PHOTO1, 'card-photo')}
           <div class="card-body">
