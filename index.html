@@ -938,6 +938,7 @@
       const nbRows = currentTotal;
       const totalCells = count * nbRows;
       const MAX_CELLS = 50_000_000;
+      const XLSX_MAX_CELLS = 10_000_000; // Au-delà : bascule auto en CSV
 
       let txt = `${count} colonne${count > 1 ? 's' : ''} · ${nbRows.toLocaleString('fr-FR')} ligne${nbRows > 1 ? 's' : ''} · ${totalCells.toLocaleString('fr-FR')} cellule${totalCells > 1 ? 's' : ''}`;
       info.className = 'modal-footer-info';
@@ -952,8 +953,9 @@
         return;
       }
 
-      if (totalCells > 10_000_000) {
-        txt += ' ⚠️ Volumineux : plusieurs minutes d\'attente';
+      if (totalCells > XLSX_MAX_CELLS) {
+        // Bascule auto en CSV
+        txt += ` · 📄 Format CSV (> 10 M cellules)`;
         info.className = 'modal-footer-info warning';
       } else if (totalCells > 1_000_000) {
         txt += ' ⏱️ Peut prendre 30s à 2 min';
@@ -967,7 +969,10 @@
       validateBtn.disabled = true;
       validateBtn.textContent = 'Export en cours… patience';
       try {
-        const params = buildQueryParams({ columns: selectedColumns.join(',') });
+        // Bascule auto Excel → CSV si > 10M cellules (évite le timeout SWA de 45s)
+        const totalCells = selectedColumns.length * currentTotal;
+        const format = totalCells > 10_000_000 ? 'csv' : 'xlsx';
+        const params = buildQueryParams({ columns: selectedColumns.join(','), format });
         const response = await fetch('/api/export?' + params.toString());
 
         if (!response.ok) {
@@ -984,7 +989,7 @@
         const blob = await response.blob();
         const disposition = response.headers.get('Content-Disposition') || '';
         const match = disposition.match(/filename="(.+)"/);
-        const filename = match ? match[1] : 'articles_export.xlsx';
+        const filename = match ? match[1] : `articles_export.${format}`;
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url; link.download = filename;
