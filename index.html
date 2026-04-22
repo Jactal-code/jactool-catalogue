@@ -149,7 +149,7 @@
     .multi-select-btn { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input); cursor: pointer; text-align: left; font-size: 13px; color: var(--text-muted); min-height: 36px; }
     .multi-select-btn:hover { border-color: var(--accent); }
     .multi-select-btn.has-values { color: var(--accent); font-weight: 500; background: var(--accent-soft); }
-    .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; max-height: 300px; overflow: hidden; z-index: 10; box-shadow: var(--shadow-md); display: none; margin-top: 4px; }
+    .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; max-height: 300px; overflow: hidden; z-index: 50; box-shadow: var(--shadow-md); display: none; margin-top: 4px; }
     .multi-select-dropdown.open { display: flex; flex-direction: column; }
     .multi-select-search { padding: 8px; border-bottom: 1px solid var(--border-softer); border-radius: 0; font-size: 13px; }
     .multi-select-search input { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; background: var(--bg-input); color: var(--text-main); }
@@ -179,15 +179,20 @@
        ============================================================= */
     .table-wrap {
       overflow-x: auto;
-      overflow-y: visible;
+      overflow-y: auto;
       background: var(--bg-card);
       border-radius: 8px;
       box-shadow: var(--shadow-sm);
+      /* Le container doit scroller en interne pour que :
+         - les sticky headers fonctionnent
+         - le scroll horizontal soit visible
+         max-height généreux pour éviter un scroll interne trop court */
+      max-height: calc(100vh - 200px);
     }
-    /* Scrollbar horizontale plus visible */
+    /* Scrollbars bien visibles */
     .table-wrap::-webkit-scrollbar { height: 12px; width: 10px; }
     .table-wrap::-webkit-scrollbar-track { background: var(--bg-card-alt); border-radius: 6px; }
-    .table-wrap::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 6px; opacity: 0.6; }
+    .table-wrap::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 6px; opacity: 0.7; }
     .table-wrap::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
     table { width: 100%; background: var(--bg-card); border-collapse: separate; border-spacing: 0; }
@@ -624,6 +629,16 @@
       color: var(--text-inverse);
       transform: translateY(-1px);
     }
+    /* Chip MASTER = couleur distinctive (vert/success) */
+    .rayon-chip-master {
+      background: rgba(67, 160, 71, 0.12);
+      color: var(--success);
+      border-color: var(--success);
+    }
+    .rayon-chip-master:hover {
+      background: var(--success);
+      color: #fff;
+    }
     .rayon-chip-sm {
       font-size: 10px;
       padding: 2px 7px;
@@ -650,6 +665,22 @@
     }
     .rayon-chip-lg:hover .rayon-chip-date {
       background: rgba(255,255,255,0.25);
+    }
+    /* Bouton "Voir tous" dans l'onglet Rayons du détail */
+    .rayons-expand-btn {
+      margin-top: 10px;
+      padding: 6px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .rayons-expand-btn:hover {
+      background: var(--accent);
+      color: var(--text-inverse);
     }
     .rayon-chips-wrap {
       display: flex;
@@ -974,7 +1005,8 @@
       cat_trad: new Set(), sous_cat_trad: new Set(),
       cat_web: new Set(), sous_cat_web: new Set(),
       acheteurs: new Set(),
-      rayons: new Set(),
+      rayons_master: new Set(),
+      rayons_client: new Set(),
       stock1_op: '', stock1_val: '',
       stock2_op: '', stock2_val: '',
       stock3_op: '', stock3_val: '',
@@ -1211,22 +1243,46 @@
       if (!rayonId) return;
       e.stopPropagation();
       e.preventDefault();
-      // Appliquer le filtre sur ce rayon uniquement
-      filters.rayons.clear();
-      filters.rayons.add(String(rayonId));
-      // Fermer le détail s'il est ouvert, recharger, et ouvrir le panneau de filtres pour montrer ce qui a été appliqué
+      // Déterminer si c'est un rayon MASTER ou client
+      const isMaster = chip.dataset.rayonMaster === '1';
+      const filterKey = isMaster ? 'rayons_master' : 'rayons_client';
+      // Reset des deux filtres rayons
+      filters.rayons_master.clear();
+      filters.rayons_client.clear();
+      // Appliquer le filtre
+      filters[filterKey].add(String(rayonId));
+      // Fermer le détail s'il est ouvert, ouvrir le panneau de filtres pour montrer ce qui a été appliqué
       if (document.getElementById('detailPanel').classList.contains('open')) {
         closeDetail();
       }
       if (!document.getElementById('filtersPanel').classList.contains('open')) {
         document.getElementById('filtersPanel').classList.add('open');
       }
-      // Re-render pour mettre à jour les boutons de filtre
       if (filterOptions) renderFilters();
       updateFilterBadge();
       currentPage = 1;
       loadArticles();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Event delegation pour le bouton "Voir tous" dans le détail Rayons
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.rayons-expand-btn');
+      if (!btn) return;
+      e.stopPropagation();
+      e.preventDefault();
+      const collapseId = btn.dataset.collapseId;
+      const hidden = document.getElementById(collapseId + '-hidden');
+      if (hidden) {
+        if (hidden.style.display === 'none') {
+          hidden.style.display = 'flex';
+          btn.textContent = 'Masquer';
+        } else {
+          hidden.style.display = 'none';
+          const total = btn.textContent.match(/\((\d+)\)/);
+          if (total) btn.textContent = `Voir tous (${total[1]})`;
+        }
+      }
     });
 
     // =============================================================
@@ -2277,22 +2333,42 @@
         return `<div class="detail-grid-2"><div>${left.map(s => renderDetailSection(s, a)).join('')}</div><div>${right.map(s => renderDetailSection(s, a)).join('')}</div></div>`;
       }},
       { id: 'rayons', label: '📚 Rayons', render: (a) => {
-        const rayons = Array.isArray(a.RAYONS) ? a.RAYONS : [];
-        if (rayons.length === 0) {
-          return `<div class="detail-section"><h3>Rayons</h3><p style="color:var(--text-empty);font-style:italic;margin:0;">Cet article n'appartient à aucun rayon MASTER.</p></div>`;
+        const allRayons = Array.isArray(a.RAYONS) ? a.RAYONS : [];
+        const masterRayons = allRayons.filter(r => r.master);
+        const otherRayons = allRayons.filter(r => !r.master);
+
+        if (allRayons.length === 0) {
+          return `<div class="detail-section"><h3>Rayons</h3><p style="color:var(--text-empty);font-style:italic;margin:0;">Cet article n'appartient à aucun rayon.</p></div>`;
         }
-        const chips = rayons.map(r => {
-          const dateShort = r.date ? new Date(r.date).toISOString().slice(0, 10) : '';
-          return `<button type="button" class="rayon-chip rayon-chip-lg" data-rayon-id="${r.id}" data-rayon-nom="${escapeHtml(r.nom)}" title="Cliquer pour filtrer sur ce rayon">
-            <span class="rayon-chip-nom">${escapeHtml(r.nom)}</span>
-            ${dateShort ? `<span class="rayon-chip-date">${dateShort}</span>` : ''}
-          </button>`;
-        }).join('');
-        return `<div class="detail-section">
-          <h3>Cet article appartient à ${rayons.length} rayon${rayons.length > 1 ? 's' : ''} MASTER</h3>
-          <p style="font-size:12px;color:var(--text-dim);margin:0 0 12px 0;">Cliquer sur un rayon pour filtrer la liste sur ses articles.</p>
-          <div class="rayon-chips-wrap">${chips}</div>
-        </div>`;
+
+        function renderChipSection(title, rayons, collapseId) {
+          if (rayons.length === 0) {
+            return `<div class="detail-section"><h3>${title}</h3><p style="color:var(--text-empty);font-style:italic;margin:0;font-size:13px;">Aucun.</p></div>`;
+          }
+          const visible = rayons.slice(0, 10);
+          const hidden = rayons.slice(10);
+          const chipsHtml = (list) => list.map(r => {
+            const dateShort = r.date ? new Date(r.date).toISOString().slice(0, 10) : '';
+            return `<button type="button" class="rayon-chip rayon-chip-lg" data-rayon-id="${r.id}" data-rayon-master="${r.master ? '1' : '0'}" title="Cliquer pour filtrer sur ce rayon">
+              <span class="rayon-chip-nom"><span style="font-family:monospace;opacity:0.7;font-size:11px;">${r.id}</span> - ${escapeHtml(r.nom)}</span>
+              ${dateShort ? `<span class="rayon-chip-date">${dateShort}</span>` : ''}
+            </button>`;
+          }).join('');
+          const expandBtn = hidden.length > 0
+            ? `<button type="button" class="rayons-expand-btn" data-collapse-id="${collapseId}">Voir tous (${rayons.length})</button>`
+            : '';
+          return `<div class="detail-section">
+            <h3>${title} (${rayons.length})</h3>
+            <div class="rayon-chips-wrap" id="${collapseId}-visible">${chipsHtml(visible)}</div>
+            ${hidden.length > 0 ? `<div class="rayon-chips-wrap" id="${collapseId}-hidden" style="display:none;margin-top:8px;">${chipsHtml(hidden)}</div>` : ''}
+            ${expandBtn}
+          </div>`;
+        }
+
+        return `
+          ${renderChipSection('Rayons MASTER', masterRayons, 'rayons-master')}
+          ${renderChipSection('Autres rayons', otherRayons, 'rayons-other')}
+        `;
       }},
       { id: 'prix', label: '💰 Prix', render: (a) => {
         const left = [
@@ -2496,8 +2572,11 @@
       grid.appendChild(makeMultiSelect('cat_web', 'Cat. web', filterOptions.cat_web));
       grid.appendChild(makeMultiSelect('sous_cat_web', 'Sous-cat. web', filterOptions.sous_cat_web));
       grid.appendChild(makeMultiSelect('acheteurs', 'Acheteur', filterOptions.acheteurs));
-      if (filterOptions.rayons && filterOptions.rayons.length > 0) {
-        grid.appendChild(makeRayonSelect(filterOptions.rayons));
+      if (filterOptions.rayons_master && filterOptions.rayons_master.length > 0) {
+        grid.appendChild(makeRayonSelect('rayons_master', 'Rayon MASTER', filterOptions.rayons_master));
+      }
+      if (filterOptions.rayons_client && filterOptions.rayons_client.length > 0) {
+        grid.appendChild(makeRayonSelect('rayons_client', 'Rayon', filterOptions.rayons_client));
       }
       grid.appendChild(makeStockFilter('stock1', 'Stock 1'));
       grid.appendChild(makeStockFilter('stock2', 'Stock 2'));
@@ -2562,27 +2641,37 @@
       return group;
     }
 
-    // Multi-select spécialisé pour les rayons : valeur = id (number), affichage = nom + date
-    function makeRayonSelect(rayons) {
+    // Multi-select spécialisé pour les rayons : valeur = id (number), affichage = "ID - nom"
+    function makeRayonSelect(key, label, rayons) {
       const group = document.createElement('div');
       group.className = 'filter-group';
-      group.innerHTML = `<label>Rayon</label><div class="multi-select"><button type="button" class="multi-select-btn" data-key="rayons">-- Tous --</button><div class="multi-select-dropdown"><div class="multi-select-search"><input type="text" placeholder="Rechercher un rayon…"></div><div class="multi-select-list"></div></div></div>`;
+      group.innerHTML = `<label>${label}</label><div class="multi-select"><button type="button" class="multi-select-btn" data-key="${key}">-- Tous --</button><div class="multi-select-dropdown"><div class="multi-select-search"><input type="text" placeholder="Rechercher un rayon…"></div><div class="multi-select-list"></div></div></div>`;
       const btn = group.querySelector('.multi-select-btn');
       const dropdown = group.querySelector('.multi-select-dropdown');
       const searchInput = group.querySelector('input');
       const list = group.querySelector('.multi-select-list');
       function renderList(filter = '') {
         const lowerFilter = filter.toLowerCase();
-        list.innerHTML = rayons.filter(r => r.nom.toLowerCase().includes(lowerFilter)).map(r => {
-          const checked = filters.rayons.has(String(r.id)) ? 'checked' : '';
+        // La recherche cherche dans ID ET dans nom
+        list.innerHTML = rayons.filter(r => {
+          const full = `${r.id} - ${r.nom}`.toLowerCase();
+          return full.includes(lowerFilter);
+        }).slice(0, 500).map(r => { // limit à 500 résultats visibles pour perf
+          const checked = filters[key].has(String(r.id)) ? 'checked' : '';
           const dateShort = r.date ? r.date.slice(0, 7) : '';
-          return `<label class="multi-select-item"><input type="checkbox" value="${r.id}" ${checked}><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.nom)}</span>${dateShort ? `<span style="font-size:11px;color:var(--text-fade);">${dateShort}</span>` : ''}</label>`;
+          return `<label class="multi-select-item">
+            <input type="checkbox" value="${r.id}" ${checked}>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;">
+              <span style="color:var(--text-dim);font-family:monospace;">${r.id}</span> - ${escapeHtml(r.nom)}
+            </span>
+            ${dateShort ? `<span style="font-size:11px;color:var(--text-fade);">${dateShort}</span>` : ''}
+          </label>`;
         }).join('');
         list.querySelectorAll('input').forEach(cb => {
           cb.addEventListener('change', e => {
-            if (e.target.checked) filters.rayons.add(e.target.value);
-            else filters.rayons.delete(e.target.value);
-            updateRayonSelectBtn(btn, rayons);
+            if (e.target.checked) filters[key].add(e.target.value);
+            else filters[key].delete(e.target.value);
+            updateRayonSelectBtn(btn, key, rayons);
             updateFilterBadge();
             currentPage = 1; loadArticles();
           });
@@ -2597,17 +2686,17 @@
       searchInput.addEventListener('input', e => renderList(e.target.value));
       searchInput.addEventListener('click', e => e.stopPropagation());
       dropdown.addEventListener('click', e => e.stopPropagation());
-      updateRayonSelectBtn(btn, rayons);
+      updateRayonSelectBtn(btn, key, rayons);
       return group;
     }
 
-    function updateRayonSelectBtn(btn, rayons) {
-      const count = filters.rayons.size;
+    function updateRayonSelectBtn(btn, key, rayons) {
+      const count = filters[key].size;
       if (count === 0) { btn.textContent = '-- Tous --'; btn.classList.remove('has-values'); }
       else if (count === 1) {
-        const id = [...filters.rayons][0];
+        const id = [...filters[key]][0];
         const rayon = rayons.find(r => String(r.id) === id);
-        btn.textContent = rayon ? rayon.nom : id;
+        btn.textContent = rayon ? `${rayon.id} - ${rayon.nom}` : id;
         btn.classList.add('has-values');
       } else { btn.textContent = `${count} sélectionnés`; btn.classList.add('has-values'); }
     }
@@ -2722,7 +2811,10 @@
       if (type === 'rayons') {
         const rayons = Array.isArray(val) ? val : [];
         if (rayons.length === 0) return `<td class="${extraClass}"><span style="color:var(--text-empty);font-style:italic;font-size:12px;">Aucun</span></td>`;
-        const chips = rayons.map(r => `<span class="rayon-chip" data-rayon-id="${r.id}" title="${escapeHtml(r.nom)}">${escapeHtml(r.nom)}</span>`).join(' ');
+        const chips = rayons.map(r => {
+          const masterAttr = r.master ? '1' : '0';
+          return `<span class="rayon-chip ${r.master ? 'rayon-chip-master' : ''}" data-rayon-id="${r.id}" data-rayon-master="${masterAttr}" title="${r.id} - ${escapeHtml(r.nom)}"><span style="font-family:monospace;opacity:0.8;font-size:10px;">${r.id}</span> ${escapeHtml(r.nom)}</span>`;
+        }).join(' ');
         return `<td class="rayons-cell${ec}">${chips}</td>`;
       }
       if (type === 'bool') {
@@ -2822,7 +2914,10 @@
           if (info.type === 'rayons') {
             const rayons = Array.isArray(val) ? val : [];
             if (rayons.length === 0) return `<div class="card-row"><span class="card-lbl">${escapeHtml(info.label)}</span><span class="card-val" style="color:var(--text-empty);font-style:italic;">Aucun</span></div>`;
-            const chips = rayons.map(r => `<span class="rayon-chip rayon-chip-sm" data-rayon-id="${r.id}" title="${escapeHtml(r.nom)}">${escapeHtml(r.nom)}</span>`).join(' ');
+            const chips = rayons.map(r => {
+              const masterAttr = r.master ? '1' : '0';
+              return `<span class="rayon-chip rayon-chip-sm ${r.master ? 'rayon-chip-master' : ''}" data-rayon-id="${r.id}" data-rayon-master="${masterAttr}" title="${r.id} - ${escapeHtml(r.nom)}">${escapeHtml(r.nom)}</span>`;
+            }).join(' ');
             return `<div class="card-row"><span class="card-lbl">${escapeHtml(info.label)}</span><span class="card-val" style="white-space:normal;">${chips}</span></div>`;
           }
           const display = formatCellValue(val, info.type);
@@ -2885,9 +2980,16 @@
     const floatingBar = document.getElementById('floatingBar');
     let floatingBarTicking = false;
 
+    function getTableWrap() {
+      return document.querySelector('.table-wrap');
+    }
+
     function updateFloatingBar() {
-      // Afficher la barre si on a scrollé > 300px
-      if (window.scrollY > 300) {
+      // Afficher la barre si on a scrollé > 300px (page OU dans le tableau interne)
+      const tableWrap = getTableWrap();
+      const tableScrolled = tableWrap ? tableWrap.scrollTop > 300 : false;
+      const pageScrolled = window.scrollY > 300;
+      if (tableScrolled || pageScrolled) {
         floatingBar.classList.add('visible');
       } else {
         floatingBar.classList.remove('visible');
@@ -2908,14 +3010,40 @@
       }
     });
 
+    // Écoute aussi le scroll interne du tableau (il est créé dynamiquement, donc event delegation-like)
+    document.addEventListener('scroll', (e) => {
+      if (e.target && e.target.classList && e.target.classList.contains('table-wrap')) {
+        if (!floatingBarTicking) {
+          window.requestAnimationFrame(() => {
+            updateFloatingBar();
+            floatingBarTicking = false;
+          });
+          floatingBarTicking = true;
+        }
+      }
+    }, true); // capture phase pour attraper les scrolls de children
+
     document.getElementById('fbTopBtn').addEventListener('click', () => {
+      // Scroll le tableau interne en haut + scroll la page
+      const tableWrap = getTableWrap();
+      if (tableWrap) tableWrap.scrollTo({ top: 0, behavior: 'smooth' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
     document.getElementById('fbPrevBtn').addEventListener('click', () => {
-      if (currentPage > 1) { currentPage--; loadArticles(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      if (currentPage > 1) {
+        currentPage--; loadArticles();
+        const tableWrap = getTableWrap();
+        if (tableWrap) tableWrap.scrollTo({ top: 0 });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     });
     document.getElementById('fbNextBtn').addEventListener('click', () => {
-      if (currentPage < totalPages) { currentPage++; loadArticles(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      if (currentPage < totalPages) {
+        currentPage++; loadArticles();
+        const tableWrap = getTableWrap();
+        if (tableWrap) tableWrap.scrollTo({ top: 0 });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     });
 
     document.addEventListener('click', () => {
