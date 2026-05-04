@@ -694,6 +694,70 @@
     }
 
     /* =============================================================
+       BANNIÈRE MODE LISTE
+       ============================================================= */
+    .list-mode-banner {
+      background: linear-gradient(135deg, rgba(237, 108, 2, 0.12), rgba(237, 108, 2, 0.06));
+      border: 1px solid var(--warning);
+      border-left: 4px solid var(--warning);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    [data-theme="dark"] .list-mode-banner {
+      background: linear-gradient(135deg, rgba(255, 167, 38, 0.18), rgba(255, 167, 38, 0.08));
+    }
+    .list-mode-banner-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .list-mode-banner-icon { font-size: 18px; }
+    .list-mode-banner-text {
+      font-size: 14px;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+    .list-mode-banner-text strong { color: var(--warning); }
+    .list-mode-banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .list-mode-banner-link {
+      background: none;
+      border: none;
+      color: var(--warning);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: underline;
+      padding: 4px 8px;
+    }
+    .list-mode-banner-link:hover { background: rgba(237, 108, 2, 0.15); border-radius: 4px; }
+    .list-mode-banner-close {
+      background: var(--bg-card);
+      border: 1px solid var(--warning);
+      color: var(--warning);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .list-mode-banner-close:hover {
+      background: var(--warning);
+      color: #fff;
+    }
+
+    /* =============================================================
        RESPONSIVE
        ============================================================= */
     @media (max-width: 800px) {
@@ -716,6 +780,7 @@
     <button id="resetBtn" class="secondary">Réinitialiser</button>
     <button id="exportBtn" class="export">📥 Exporter</button>
     <button id="imagesBtn" class="export">📸 Images</button>
+    <button id="listSearchBtn" class="export">📋 Liste</button>
     <select id="pageSizeSelect" class="page-size-select" title="Nombre d'articles par page">
       <option value="50">50 / page</option>
       <option value="100">100 / page</option>
@@ -738,6 +803,18 @@
       <button id="prevBtn">← Précédent</button>
       <span id="pageInfo">Page 1 sur 1</span>
       <button id="nextBtn">Suivant →</button>
+    </div>
+  </div>
+
+  <!-- Bannière mode liste (visible quand une recherche en lot est active) -->
+  <div class="list-mode-banner" id="listModeBanner" style="display:none;">
+    <div class="list-mode-banner-content">
+      <span class="list-mode-banner-icon">📋</span>
+      <div class="list-mode-banner-text" id="listModeBannerText">Mode liste actif</div>
+    </div>
+    <div class="list-mode-banner-actions">
+      <button class="list-mode-banner-link" id="listModeReportBtn" style="display:none;">Voir les introuvables</button>
+      <button class="list-mode-banner-close" id="listModeCloseBtn" title="Quitter le mode liste">✕ Quitter</button>
     </div>
   </div>
 
@@ -937,6 +1014,36 @@
     </div>
   </div>
 
+  <!-- Popup Recherche en lot -->
+  <div class="modal-overlay" id="listSearchModal">
+    <div class="modal medium">
+      <div class="modal-header">
+        <h2 class="modal-title">📋 Recherche en lot</h2>
+        <button class="modal-close" id="listSearchCloseBtn">✕</button>
+      </div>
+      <div class="img-body">
+        <div class="img-section">
+          <div class="img-section-title">Liste d'identifiants à rechercher</div>
+          <p class="img-radio-sub" style="margin-bottom: 10px;">
+            Collez ici une liste de réfs Jactal (contiennent un <code>-</code>) ou d'EAN usine (13 chiffres). Séparateurs : virgule, point-virgule, tabulation, retour ligne. Type détecté automatiquement.
+          </p>
+          <textarea id="listSearchInput" class="img-textarea" rows="10" placeholder="Ex:&#10;ABC-123&#10;DEF-456&#10;3256789012345&#10;..." autofocus></textarea>
+          <div class="img-list-stats" id="listSearchStats">—</div>
+        </div>
+        <div class="img-section" style="background: var(--bg-card-alt); padding: 12px 14px; border-radius: 6px; font-size: 12px; color: var(--text-dim);">
+          ℹ️ <strong>Mode liste</strong> : les filtres et la recherche actuelle seront ignorés. Les articles s'afficheront dans l'ordre où ils sont collés.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-info" id="listSearchInfo">—</div>
+        <div class="modal-footer-actions">
+          <button class="btn-cancel" id="listSearchCancelBtn">Annuler</button>
+          <button class="btn-validate" id="listSearchValidateBtn">Rechercher</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Mini-popup : Enregistrer un modèle -->
   <div class="mini-modal-overlay" id="tplSaveModal">
@@ -998,6 +1105,10 @@
     let currentTheme = 'light';
     // Initialisation sûre avant le chargement des prefs
     window.__userPrefs = { column_widths: {}, export_templates: [] };
+
+    // Mode liste : recherche par identifiants explicites collés par l'utilisateur
+    // null = pas en mode liste ; objet = mode actif avec { refs: [], eans: [], notFound: [] }
+    let listMode = null;
 
     const filters = {
       fournisseurs: new Set(), marques: new Set(), licences: new Set(),
@@ -2280,6 +2391,169 @@
     });
 
     // =============================================================
+    // RECHERCHE EN LOT (Mode liste)
+    // =============================================================
+
+    function openListSearchModal() {
+      document.getElementById('listSearchModal').classList.add('open');
+      const input = document.getElementById('listSearchInput');
+      // Si déjà en mode liste, pré-remplir avec la liste précédente (utile pour modifier)
+      if (listMode) {
+        input.value = [...(listMode.refs || []), ...(listMode.eans || [])].join('\n');
+      } else {
+        input.value = '';
+      }
+      updateListSearchInfo();
+      setTimeout(() => input.focus(), 100);
+    }
+
+    function closeListSearchModal() {
+      document.getElementById('listSearchModal').classList.remove('open');
+    }
+
+    // Réutilise les fonctions parsePastedList et classifyAll de la popup Images
+    function updateListSearchInfo() {
+      const ids = parsePastedList(document.getElementById('listSearchInput').value);
+      const { refs, eans, files, unknown } = classifyAll(ids);
+      const stats = document.getElementById('listSearchStats');
+      const info = document.getElementById('listSearchInfo');
+      const validateBtn = document.getElementById('listSearchValidateBtn');
+
+      info.className = 'modal-footer-info';
+
+      if (ids.length === 0) {
+        stats.textContent = '—';
+        info.textContent = 'Collez au moins un identifiant';
+        validateBtn.disabled = true;
+        return;
+      }
+
+      // On ignore les fichiers (ce mode est pour les images, pas pour la recherche)
+      const totalUsable = refs.length + eans.length;
+      const parts = [];
+      if (refs.length) parts.push(`${refs.length} réf.`);
+      if (eans.length) parts.push(`${eans.length} EAN`);
+      stats.innerHTML = `<strong>${totalUsable}</strong> identifiant${totalUsable > 1 ? 's' : ''} détecté${totalUsable > 1 ? 's' : ''} : ${parts.join(', ')}`;
+      if (files.length > 0) {
+        stats.innerHTML += ` <span style="color:var(--text-fade);">(${files.length} nom${files.length > 1 ? 's' : ''} de fichier ignoré${files.length > 1 ? 's' : ''})</span>`;
+      }
+
+      if (totalUsable === 0) {
+        info.textContent = 'Aucune réf. ou EAN détecté';
+        validateBtn.disabled = true;
+        return;
+      }
+
+      info.textContent = `Rechercher ${totalUsable.toLocaleString('fr-FR')} article${totalUsable > 1 ? 's' : ''}`;
+      validateBtn.disabled = false;
+    }
+
+    function startListSearch() {
+      const ids = parsePastedList(document.getElementById('listSearchInput').value);
+      const { refs, eans } = classifyAll(ids);
+      if (refs.length === 0 && eans.length === 0) return;
+
+      // Activer le mode liste : court-circuite tous les filtres et la recherche
+      listMode = {
+        refs,
+        eans,
+        notFound: [], // sera rempli par la réponse API
+        totalRequested: refs.length + eans.length
+      };
+      // Vider les filtres (ils seront ignorés mais on les remet à zéro pour cohérence visuelle)
+      currentSearch = '';
+      document.getElementById('searchInput').value = '';
+      // Vider tous les filtres
+      Object.keys(filters).forEach(k => {
+        if (filters[k] instanceof Set) filters[k].clear();
+        else if (typeof filters[k] === 'string') filters[k] = '';
+      });
+      updateFilterBadge();
+      // Refermer la popup
+      closeListSearchModal();
+      // Recharger
+      currentPage = 1;
+      loadArticles();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function exitListMode() {
+      listMode = null;
+      document.getElementById('listModeBanner').style.display = 'none';
+      currentPage = 1;
+      loadArticles();
+    }
+
+    function updateListModeBanner() {
+      const banner = document.getElementById('listModeBanner');
+      const text = document.getElementById('listModeBannerText');
+      const reportBtn = document.getElementById('listModeReportBtn');
+      if (!listMode) {
+        banner.style.display = 'none';
+        return;
+      }
+      banner.style.display = 'flex';
+      const found = listMode.totalRequested - (listMode.notFound ? listMode.notFound.length : 0);
+      let html = `<strong>Mode liste</strong> — ${found.toLocaleString('fr-FR')} article${found > 1 ? 's' : ''} trouvé${found > 1 ? 's' : ''} sur ${listMode.totalRequested.toLocaleString('fr-FR')} demandé${listMode.totalRequested > 1 ? 's' : ''}.`;
+      if (listMode.notFound && listMode.notFound.length > 0) {
+        html += ` <span style="color:var(--warning);font-weight:500;">${listMode.notFound.length} introuvable${listMode.notFound.length > 1 ? 's' : ''}.</span>`;
+        reportBtn.style.display = 'inline-block';
+        reportBtn.textContent = `Voir les ${listMode.notFound.length} introuvable${listMode.notFound.length > 1 ? 's' : ''}`;
+      } else {
+        reportBtn.style.display = 'none';
+      }
+      text.innerHTML = html;
+    }
+
+    function showListNotFoundReport() {
+      if (!listMode || !listMode.notFound || listMode.notFound.length === 0) return;
+      // Réutiliser la mini-popup de rapport d'images
+      document.getElementById('imgReportTitle').textContent = '📋 Identifiants introuvables';
+      const summary = document.getElementById('imgReportSummary');
+      const list = document.getElementById('imgReportList');
+      const downloadBtn = document.getElementById('imgReportDownloadBtn');
+      summary.innerHTML = `<strong>${listMode.notFound.length}</strong> identifiant${listMode.notFound.length > 1 ? 's' : ''} non trouvé${listMode.notFound.length > 1 ? 's' : ''} dans la base.`;
+      list.innerHTML = listMode.notFound.map(nf => `${escapeHtml(nf.id)} <span style="color:var(--text-fade);font-size:11px;">(${nf.type})</span>`).join('<br>');
+      list.style.display = 'block';
+      downloadBtn.style.display = 'inline-block';
+      downloadBtn.onclick = () => {
+        const now = new Date();
+        const content = `Rapport recherche en lot - ${now.toLocaleString('fr-FR')}\n` +
+                        `Total demandés : ${listMode.totalRequested}\n` +
+                        `Trouvés : ${listMode.totalRequested - listMode.notFound.length}\n` +
+                        `Introuvables : ${listMode.notFound.length}\n\n` +
+                        `=== Détails ===\n` +
+                        listMode.notFound.map(nf => `${nf.id} (${nf.type})`).join('\n');
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `rapport_recherche_${now.toISOString().slice(0, 10).replace(/-/g, '')}.txt`;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+      document.getElementById('imgReportModal').classList.add('open');
+    }
+
+    // Events
+    document.getElementById('listSearchBtn').addEventListener('click', openListSearchModal);
+    document.getElementById('listSearchCloseBtn').addEventListener('click', closeListSearchModal);
+    document.getElementById('listSearchCancelBtn').addEventListener('click', closeListSearchModal);
+    document.getElementById('listSearchValidateBtn').addEventListener('click', startListSearch);
+    document.getElementById('listSearchInput').addEventListener('input', updateListSearchInfo);
+    document.getElementById('listModeCloseBtn').addEventListener('click', exitListMode);
+    document.getElementById('listModeReportBtn').addEventListener('click', showListNotFoundReport);
+
+    // Ctrl+Enter dans le textarea pour lancer la recherche
+    document.getElementById('listSearchInput').addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        const btn = document.getElementById('listSearchValidateBtn');
+        if (!btn.disabled) startListSearch();
+      }
+    });
+
+    // =============================================================
     // DÉTAIL
     // =============================================================
     const DETAIL_TABS = [
@@ -2730,21 +3004,63 @@
       info.style.display = 'none';
 
       try {
-        const params = new URLSearchParams({ page: currentPage, pageSize: currentPageSize });
-        if (currentSearch) params.append('search', currentSearch);
-        params.append('sort', currentSort);
-        params.append('order', currentOrder);
-        // Les colonnes "virtuelles" (RAYONS) ne sont pas dans la VIEW — elles sont ajoutées côté serveur via une requête séparée
-        params.append('columns', visibleColumns.filter(c => c !== 'RAYONS').join(','));
-        for (const k in filters) {
-          const v = filters[k];
-          if (v instanceof Set && v.size > 0) params.append(k, [...v].join(','));
-          else if (typeof v === 'string' && v) params.append(k, v);
+        let response;
+
+        if (listMode) {
+          // ===== MODE LISTE : envoyer en POST si grosse liste, sinon GET =====
+          const totalIds = (listMode.refs.length + listMode.eans.length);
+          const useBigPost = totalIds > 200;
+          const baseFields = {
+            page: currentPage,
+            pageSize: currentPageSize,
+            sort: currentSort,
+            order: currentOrder,
+            columns: visibleColumns.filter(c => c !== 'RAYONS').join(',')
+          };
+          if (useBigPost) {
+            // POST avec body JSON
+            response = await fetch('/api/articles', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...baseFields,
+                refs_list: listMode.refs,
+                eans_list: listMode.eans
+              })
+            });
+          } else {
+            // GET avec query string
+            const params = new URLSearchParams(baseFields);
+            if (listMode.refs.length) params.append('refs_list', listMode.refs.join(','));
+            if (listMode.eans.length) params.append('eans_list', listMode.eans.join(','));
+            response = await fetch('/api/articles?' + params.toString());
+          }
+        } else {
+          // ===== MODE NORMAL =====
+          const params = new URLSearchParams({ page: currentPage, pageSize: currentPageSize });
+          if (currentSearch) params.append('search', currentSearch);
+          params.append('sort', currentSort);
+          params.append('order', currentOrder);
+          // Les colonnes "virtuelles" (RAYONS) ne sont pas dans la VIEW
+          params.append('columns', visibleColumns.filter(c => c !== 'RAYONS').join(','));
+          for (const k in filters) {
+            const v = filters[k];
+            if (v instanceof Set && v.size > 0) params.append(k, [...v].join(','));
+            else if (typeof v === 'string' && v) params.append(k, v);
+          }
+          response = await fetch('/api/articles?' + params.toString());
         }
 
-        const response = await fetch('/api/articles?' + params.toString());
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = await response.json();
+
+        // Mise à jour du mode liste si la réponse contient ces infos
+        if (data.list_mode && listMode) {
+          listMode.notFound = data.list_not_found || [];
+          updateListModeBanner();
+        } else {
+          updateListModeBanner();
+        }
 
         totalPages = data.totalPages;
         currentTotal = data.total;
