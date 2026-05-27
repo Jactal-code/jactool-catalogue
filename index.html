@@ -758,6 +758,182 @@
     }
 
     /* =============================================================
+       GALERIE PHOTOS (détail article) — version INDPHO
+       ============================================================= */
+    .photos-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    .photos-count {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    .photos-download-all-btn {
+      padding: 6px 12px;
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .photos-download-all-btn:hover { background: var(--success-hover); }
+    .photos-download-all-btn:disabled { background: var(--text-fade); cursor: not-allowed; }
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    .photo-thumb {
+      width: 100%;
+      aspect-ratio: 1;
+      background: var(--bg-card-alt);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid var(--border-soft);
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .photo-thumb:hover {
+      transform: scale(1.03);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent);
+    }
+    .photo-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .photo-thumb-empty { font-size: 11px; color: var(--text-empty); }
+    .photo-main-badge {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: var(--accent);
+      color: var(--text-inverse);
+      font-size: 10px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      z-index: 2;
+    }
+
+    /* =============================================================
+       LIGHTBOX (vue plein écran d'une photo)
+       ============================================================= */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-content {
+      position: relative;
+      max-width: 100%;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .lightbox-content img {
+      max-width: 100%;
+      max-height: calc(100vh - 140px);
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+    }
+    .lightbox-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.1);
+      padding: 8px 16px;
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+    }
+    .lightbox-counter {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .lightbox-download {
+      background: var(--success);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .lightbox-download:hover { background: var(--success-hover); }
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      z-index: 501;
+    }
+    .lightbox-close:hover { background: rgba(255,255,255,0.25); }
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      font-size: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      z-index: 501;
+      line-height: 1;
+      padding: 0 0 4px 0;
+    }
+    .lightbox-nav:hover { background: rgba(255,255,255,0.25); }
+    .lightbox-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+    .lightbox-prev { left: 20px; }
+    .lightbox-next { right: 20px; }
+
+    /* =============================================================
        RESPONSIVE
        ============================================================= */
     @media (max-width: 800px) {
@@ -1014,8 +1190,19 @@
     </div>
   </div>
 
-  <!-- Popup Recherche en lot -->
-  <div class="modal-overlay" id="listSearchModal">
+  <!-- Lightbox photo -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxCloseBtn" title="Fermer (Échap)">✕</button>
+    <button class="lightbox-nav lightbox-prev" id="lightboxPrevBtn" title="Précédente (←)">‹</button>
+    <button class="lightbox-nav lightbox-next" id="lightboxNextBtn" title="Suivante (→)">›</button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" src="" alt="">
+      <div class="lightbox-info">
+        <div class="lightbox-counter" id="lightboxCounter">1 / 1</div>
+        <button class="lightbox-download" id="lightboxDownloadBtn" title="Télécharger">⬇ Télécharger</button>
+      </div>
+    </div>
+  </div>
     <div class="modal medium">
       <div class="modal-header">
         <h2 class="modal-title">📋 Recherche en lot</h2>
@@ -2554,6 +2741,165 @@
     });
 
     // =============================================================
+    // LIGHTBOX (vue plein écran d'une photo)
+    // =============================================================
+    let lightboxState = { photos: [], index: 0, ref: '' };
+
+    function openLightbox(photos, startIndex, articleRef) {
+      lightboxState = { photos, index: startIndex || 0, ref: articleRef || '' };
+      document.getElementById('lightbox').classList.add('open');
+      renderLightbox();
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+    }
+
+    function renderLightbox() {
+      const { photos, index } = lightboxState;
+      if (!photos.length) return;
+      const photo = photos[index];
+      document.getElementById('lightboxImg').src = photo.url;
+      document.getElementById('lightboxCounter').textContent = `${index + 1} / ${photos.length}`;
+      document.getElementById('lightboxPrevBtn').disabled = index === 0;
+      document.getElementById('lightboxNextBtn').disabled = index === photos.length - 1;
+    }
+
+    function lightboxPrev() {
+      if (lightboxState.index > 0) {
+        lightboxState.index--;
+        renderLightbox();
+      }
+    }
+
+    function lightboxNext() {
+      if (lightboxState.index < lightboxState.photos.length - 1) {
+        lightboxState.index++;
+        renderLightbox();
+      }
+    }
+
+    function lightboxDownload() {
+      const { photos, index, ref } = lightboxState;
+      const photo = photos[index];
+      if (!photo) return;
+      const filename = `${ref}${photos.length > 1 ? '_' + (index + 1) : ''}`;
+      downloadImage(photo.url, filename);
+    }
+
+    // Events lightbox
+    document.getElementById('lightboxCloseBtn').addEventListener('click', closeLightbox);
+    document.getElementById('lightboxPrevBtn').addEventListener('click', lightboxPrev);
+    document.getElementById('lightboxNextBtn').addEventListener('click', lightboxNext);
+    document.getElementById('lightboxDownloadBtn').addEventListener('click', lightboxDownload);
+    // Clic sur le fond (en dehors de l'image) ferme
+    document.getElementById('lightbox').addEventListener('click', (e) => {
+      if (e.target.id === 'lightbox') closeLightbox();
+    });
+    // Raccourcis clavier
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('lightbox').classList.contains('open')) return;
+      if (e.key === 'Escape') { e.preventDefault(); closeLightbox(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); lightboxPrev(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); lightboxNext(); }
+    });
+
+    // Event delegation pour clic sur thumbnail de photo (ouvrir lightbox)
+    document.addEventListener('click', (e) => {
+      const thumb = e.target.closest('.photo-thumb');
+      if (!thumb) return;
+      // Ne pas ouvrir le lightbox si on clique sur le bouton download
+      if (e.target.closest('.img-download-btn')) return;
+      const photosContainer = thumb.closest('.detail-section');
+      if (!photosContainer) return;
+      // Récupérer toutes les photos depuis l'article courant
+      if (!window.__currentArticle || !Array.isArray(window.__currentArticle.PHOTOS)) return;
+      const idx = parseInt(thumb.dataset.photoIndex, 10) || 0;
+      const ref = window.__currentArticle.REF_JACTAL || 'image';
+      openLightbox(window.__currentArticle.PHOTOS, idx, ref);
+    });
+
+    // Event delegation pour bouton "Télécharger toutes les photos"
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.photos-download-all-btn');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const ref = btn.dataset.ref;
+      if (!ref || !window.__currentArticle || !Array.isArray(window.__currentArticle.PHOTOS)) return;
+      const photos = window.__currentArticle.PHOTOS;
+      if (photos.length === 0) return;
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Préparation…';
+
+      try {
+        // Télécharger chaque image en parallèle (max 5 en parallèle pour ne pas saturer)
+        const blobs = [];
+        const concurrency = 5;
+        let downloaded = 0;
+        const queue = photos.map((p, i) => ({ ...p, index: i }));
+
+        async function worker() {
+          while (queue.length) {
+            const p = queue.shift();
+            try {
+              const resp = await fetch(p.url, { mode: 'cors' });
+              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+              const blob = await resp.blob();
+              blobs.push({ index: p.index, blob, filename: p.filename || `${ref}_${p.index + 1}.jpg` });
+            } catch (err) {
+              console.warn('Échec téléchargement photo', p.url, err);
+            }
+            downloaded++;
+            btn.textContent = `Téléchargement… ${downloaded}/${photos.length}`;
+          }
+        }
+        await Promise.all(Array.from({ length: concurrency }, worker));
+
+        if (blobs.length === 0) {
+          alert('Aucune photo n\'a pu être téléchargée.');
+          return;
+        }
+
+        // Créer un ZIP côté client avec JSZip... mais on ne l'a pas !
+        // Alternative simple : télécharger toutes les photos une par une (le navigateur va peut-être bloquer mais on tente)
+        // Plus propre : passer par notre endpoint backend images-zip
+        // Pour cette V1 : on utilise notre endpoint backend
+        btn.textContent = 'Création du ZIP…';
+        const params = new URLSearchParams();
+        const refsList = photos.map(p => {
+          // Extraire le nom du fichier comme identifiant
+          return p.filename || p.url.split('/').pop();
+        }).filter(Boolean);
+        // On passe les noms de fichiers
+        params.append('files', refsList.join(','));
+        params.append('rename', 'origin');
+        params.append('chunkSize', '100');
+        params.append('chunk', '0');
+
+        const resp = await fetch('/api/images-zip?' + params.toString());
+        if (!resp.ok) throw new Error('Erreur backend ZIP');
+        const blob = await resp.blob();
+        const disposition = resp.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="(.+)"/);
+        const filename = match ? match[1] : `${ref}_photos.zip`;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url; link.download = `${ref}_photos.zip`;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error(err);
+        alert(`Erreur : ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+
+    // =============================================================
     // DÉTAIL
     // =============================================================
     const DETAIL_TABS = [
@@ -2701,17 +3047,32 @@
     function renderDetailSection(section, a, full = false) {
       let content;
       if (section.photos) {
-        const urls = [a.URL_PHOTO1, a.URL_PHOTO2, a.URL_PHOTO3, a.URL_PHOTO4, a.URL_PHOTO5];
+        // Utiliser le tableau PHOTOS (depuis INDPHO) si disponible, sinon fallback sur URL_PHOTO1-5
         const ref = a.REF_JACTAL || 'image';
-        const thumbs = urls.map((url, i) => {
-          if (url && url.trim()) {
-            const safeUrl = escapeHtml(url);
-            const refWithIdx = urls.filter((u, j) => j <= i && u && u.trim()).length > 1 ? `${ref}_${i+1}` : ref;
-            return `<div class="photo-thumb" title="Photo ${i+1}"><img src="${safeUrl}" loading="lazy" onerror="this.outerHTML='<span class=&quot;photo-thumb-empty&quot;>Indispo</span>'"><button class="img-download-btn" data-url="${safeUrl}" data-ref="${escapeHtml(refWithIdx)}" title="Télécharger">⬇</button></div>`;
-          }
-          return `<div class="photo-thumb"><span class="photo-thumb-empty">Photo ${i+1}</span></div>`;
-        }).join('');
-        content = `<div class="photos-grid">${thumbs}</div>`;
+        const photos = Array.isArray(a.PHOTOS) ? a.PHOTOS : [];
+        if (photos.length === 0) {
+          content = `<div style="color:var(--text-empty);font-style:italic;font-size:13px;">Aucune photo disponible.</div>`;
+        } else {
+          const thumbs = photos.map((p, i) => {
+            const safeUrl = escapeHtml(p.url);
+            const safeRef = `${ref}${photos.length > 1 ? '_' + (i+1) : ''}`;
+            const mainBadge = p.is_main ? '<span class="photo-main-badge" title="Photo principale">★</span>' : '';
+            return `<div class="photo-thumb" data-photo-index="${i}" title="Cliquer pour agrandir">
+              <img src="${safeUrl}" loading="lazy" onerror="this.outerHTML='<span class=&quot;photo-thumb-empty&quot;>Indispo</span>'">
+              ${mainBadge}
+              <button class="img-download-btn" data-url="${safeUrl}" data-ref="${escapeHtml(safeRef)}" title="Télécharger">⬇</button>
+            </div>`;
+          }).join('');
+          // Bouton "Télécharger tout" si plus d'1 photo
+          const dlAllBtn = photos.length > 1
+            ? `<button type="button" class="photos-download-all-btn" data-ref="${escapeHtml(ref)}" title="Télécharger toutes les photos en ZIP">📦 Télécharger toutes (${photos.length})</button>`
+            : '';
+          content = `<div class="photos-section-header">
+            <span class="photos-count">${photos.length} photo${photos.length > 1 ? 's' : ''}</span>
+            ${dlAllBtn}
+          </div>
+          <div class="photos-grid">${thumbs}</div>`;
+        }
       } else {
         const rows = section.fields.map(([key, lbl, type]) => {
           const val = a[key];
@@ -2763,6 +3124,8 @@
         const resp = await fetch('/api/article/' + encodeURIComponent(ref));
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const article = await resp.json();
+        // Stocker pour usage par le lightbox et le bouton "Télécharger tout"
+        window.__currentArticle = article;
         renderDetail(article);
       } catch (err) {
         content.innerHTML = `<div class="error" style="margin: 20px;">Erreur : ${escapeHtml(err.message)}</div>`;
@@ -2772,6 +3135,7 @@
     function closeDetail() {
       document.getElementById('detailOverlay').classList.remove('open');
       document.getElementById('detailPanel').classList.remove('open');
+      window.__currentArticle = null;
     }
 
     function renderDetail(a) {
